@@ -126,6 +126,6 @@ def test_numbered_files_match_zeroops_paths():
 def test_project_root_holds_no_outputs():
     allowed = {"inputs", "work", "outputs", "zeroops", "scripts", "tests",
                "third_party", "jev", "README.md", "CHANGES.md", "requirements.txt", ".env", ".env.example",
-               ".gitignore", ".pytest_cache"}
+               ".gitignore", ".pytest_cache", ".git"}
     stray = sorted(p.name for p in paths.ROOT.iterdir() if p.name not in allowed)
     assert not stray, f"unexpected files in the project root: {stray}"

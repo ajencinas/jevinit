@@ -72,6 +72,7 @@ SMOKE_API = RESULTS / "smoke_api.json"
 CONTENT = ROOT / "inputs"
 CLAIMS = CONTENT / "claims.json"
 QUESTIONS_TEMPLATE = CONTENT / "questions.template.md"
+ICONS = CONTENT / "icons"          # deck line icons (scripts/gen_icons.py)
 RESEARCH = CONTENT / "research"
 RESEARCH_README = RESEARCH / "README.md"
 # Research files the hub links to (copied into outputs/docs/research/).

@@ -25,16 +25,30 @@ from build_cio_v2 import context, fill, digest, box, text, table, export_pdf, ch
 NAVY, TEAL, GREY, LIGHT = "142E42", "007F82", "596A76", "EFF4F6"
 
 
+SECTION_ICON = {
+    "THE INDUSTRY": "network", "THE GAP": "flow", "THE OPPORTUNITY": "target", "AN EXAMPLE": "alert",
+    "THE EVIDENCE": "chart", "WHERE IT FITS": "link", "THE VALUE": "gauge", "THE PATH": "path",
+    "THE DEMO": "play",
+    "Appendix": "spark", "APPENDIX A1": "chart", "APPENDIX A2": "checklist", "APPENDIX A3": "grid",
+    "APPENDIX A4": "shield", "APPENDIX A5": "question", "APPENDIX A6": "scale",
+    "APPENDIX A7": "info", "SOURCES": "book",
+}
+
+
 def rule(slide, y, x=.6, w=12.1, color="CCD7DD"):
     box(slide, x, y, w, .012, color)
 
 
 def frame(slide, spec):
     box(slide, 0, 0, 13.333, .08, TEAL)
-    text(slide, spec["section"].upper(), .6, .26, 12, .3, 10, TEAL, True)
-    text(slide, spec["title"], .6, .72, 12.1, .95, 25, NAVY, True)
+    text(slide, spec["section"].upper(), .6, .26, 11, .3, 10, TEAL, True)
+    text(slide, spec["title"], .6, .72, 11.25, .95, 25, NAVY, True)
     if spec.get("subtitle"):
-        text(slide, spec["subtitle"], .6, 1.66, 12.1, .42, 13, GREY)
+        text(slide, spec["subtitle"], .6, 1.66, 11.25, .42, 13, GREY)
+    ic = SECTION_ICON.get(spec.get("section", "").strip().upper())
+    if ic and (paths.ICONS / f"{ic}.png").exists():
+        box(slide, 12.12, .24, .78, .78, LIGHT)
+        slide.shapes.add_picture(str(paths.ICONS / f"{ic}.png"), Inches(12.22), Inches(.34), Inches(.58), Inches(.58))
 
 
 def footer(slide, spec, index, sources):
@@ -93,7 +107,7 @@ def table_with_band(slide, spec, y=2.25, avail=5.45):
     n = len(rows)
     reserve = .9 if spec.get("takeaway") else .15
     row_h = min(.83, (avail - y - reserve) / max(n, 1))
-    font = 16 if n <= 4 else (11 if n <= 8 else 9)
+    font = 16 if n <= 3 else (14 if n == 4 else (11 if n <= 8 else 9))
     widths = spec.get("widths") or ([3.0, 4.0, 5.15] if len(headers) == 3 else [2.0, 10.1])
     table(slide, headers, rows, x=.6, y=y, widths=widths, row_h=row_h, font=font)
     if spec.get("takeaway"):
@@ -226,6 +240,14 @@ def build_deck(story, facts, sources, target):
                 text(slide, b, 4.7, y + .05, 7.9, .44, 11)
                 y += .58
             text(slide, spec["help"], .6, y + .02, 12.1, .48, 11, GREY)
+        elif layout == "video":
+            px, py, pw, ph = 5.15, 2.4, 7.6, 4.275
+            if loc.DEMO_VIDEO.exists():
+                slide.shapes.add_movie(str(loc.DEMO_VIDEO), Inches(px), Inches(py), Inches(pw), Inches(ph),
+                                       poster_frame_image=str(loc.DEMO_POSTER) if loc.DEMO_POSTER.exists() else None,
+                                       mime_type="video/mp4")
+            text(slide, spec["body"], .6, 2.4, 4.3, 3.7, 15)
+            text(slide, spec.get("runtime", ""), .6, 6.2, 4.3, .3, 11, GREY)
         elif layout == "sources":
             for i, source in enumerate(sources.values()):
                 x, y = .6 + (i // 4) * 6.3, 2.35 + (i % 4) * .85
