@@ -10,23 +10,23 @@ Everything to open, read or present, numbered in reading order. [`index.html`](i
 
 | File | What it is | How to open | Size or length | Built | Up to date? |
 |---|---|---|---|---|---|
-| [1_ZeroOps-Jev_v4.pptx](1_ZeroOps-Jev_v4.pptx) | Discussion deck (v4) with speaker notes, for a conversation with a CIO | PowerPoint, Keynote or LibreOffice Impress | 21 slides (12 + 8-slide appendix), 109 KB | 4 Oct 2026 22:22 | yes |
-| [1_ZeroOps-Jev_v4.pdf](1_ZeroOps-Jev_v4.pdf) | The deck as a PDF, for quick viewing; no speaker notes | any PDF viewer | 21 pages, 619 KB | 4 Oct 2026 22:22 | yes |
+| [1_ZeroOps-Jev_v4.pptx](1_ZeroOps-Jev_v4.pptx) | Discussion deck (v4) with speaker notes, for a conversation with a CIO | PowerPoint, Keynote or LibreOffice Impress | 22 slides (13 + 8-slide appendix), 20.3 MB | 5 Oct 2026 06:47 | yes |
+| [1_ZeroOps-Jev_v4.pdf](1_ZeroOps-Jev_v4.pdf) | The deck as a PDF, for quick viewing; no speaker notes | any PDF viewer | 22 pages, 20.5 MB | 5 Oct 2026 06:47 | yes |
 | [3_open-questions-and-next-steps.md](3_open-questions-and-next-steps.md) | Open questions and next steps: considerations, the questions by owner, and a staged way to find out on your own tickets | Markdown: any text editor or Markdown preview | 4,572 words | 4 Oct 2026 18:08 | yes |
-| [4_demo.mp4](4_demo.mp4) | Demo video, narrated: the whole story in a few minutes | any video player, or the hub | 2:49, 1080p, 30.2 MB | 4 Oct 2026 22:53 | yes |
+| [4_demo.mp4](4_demo.mp4) | Demo video, narrated: the whole story in a few minutes | any video player, or the hub | 2:02, 1080p, 20.0 MB | 4 Oct 2026 23:04 | yes |
 | [7_results-report.md](7_results-report.md) | Results report: every table behind the summaries, with column definitions | Markdown: any text editor or Markdown preview | 1,250 words | 4 Oct 2026 18:07 | yes |
 
 ## Pages and folders
 
 | File | What it is | How to open | Size or length | Built | Up to date? |
 |---|---|---|---|---|---|
-| [index.html](index.html) | Hub page: everything below, with descriptions and the headline results | a browser (from the hub, or open the file) | 11 KB | 4 Oct 2026 22:53 | yes |
+| [index.html](index.html) | Hub page: everything below, with descriptions and the headline results | a browser (from the hub, or open the file) | 11 KB | 5 Oct 2026 06:47 | yes |
 | [lab/](lab/index.html) | Threshold Lab: move the gate's thresholds and see which recorded decisions change | a browser (from the hub, or open the file) | 93 KB | 4 Oct 2026 18:08 | yes |
 | [one-incident/](one-incident/index.html) | One incident, two kinds of output: one recorded call each to Jev and to a chat model | a browser (from the hub, or open the file) | 12 KB | 4 Oct 2026 18:08 | yes |
 | [dashboard/](dashboard/index.html) | Dashboard: one incident, its answers, each gate check and the outcome; the loop video (6) is rendered from this page (work/video/dashboard-loop/index.html) | a browser (from the hub, or open the file) | 76 KB | 4 Oct 2026 18:08 | yes |
-| [previews/deck/](previews/deck/slide-01.png) | Slide images of the deck, one PNG per slide (50 dpi) | any image viewer | 21 images | 4 Oct 2026 22:22 | yes |
-| [previews/video/](previews/video) | Still frames from the demo video | any image viewer | 3 images | 4 Oct 2026 22:53 | yes |
+| [previews/deck/](previews/deck/slide-01.png) | Slide images of the deck, one PNG per slide (50 dpi) | any image viewer | 22 images | 5 Oct 2026 06:47 | yes |
+| [previews/video/](previews/video) | Still frames from the demo video | any image viewer | 3 images | 4 Oct 2026 22:53 | may be out of date: 3 frame(s) older than their video |
 | [previews/pages/](previews/pages) | Screenshots of the Threshold Lab and the one-incident page | any image viewer | 3 images | 4 Oct 2026 18:07 | may be out of date: lab.png and one-incident.png older than the page |
-| [docs/](docs/research/README.md) | Copies of the research files the hub links to (originals in `inputs/research/`, copied by build_hub.py) | Markdown: any text editor or Markdown preview | 6 files | 4 Oct 2026 22:53 | yes |
+| [docs/](docs/research/README.md) | Copies of the research files the hub links to (originals in `inputs/research/`, copied by build_hub.py) | Markdown: any text editor or Markdown preview | 6 files | 5 Oct 2026 06:47 | yes |
 
 Sources and raw data live outside this folder: storyline and the questions template in `inputs/`, raw run data in `work/results/` (decision logs, `facts.json`, `metrics.json`), HyperFrames video sources in `work/video/`, research originals in `inputs/research/`, builders in `scripts/`. Rebuild everything here with no API calls: `./jev/bin/python scripts/run_all.py --skip-api --skip-local`.

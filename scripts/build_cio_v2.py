@@ -57,12 +57,14 @@ def fill(value, ctx):
     return value
 
 
-def box(slide, x, y, w, h, color):
-    s = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(x), Inches(y), Inches(w), Inches(h))
+def box(slide, x, y, w, h, color, kind=MSO_SHAPE.RECTANGLE):
+    s = slide.shapes.add_shape(kind, Inches(x), Inches(y), Inches(w), Inches(h))
     s.fill.solid()
     s.fill.fore_color.rgb = RGBColor.from_string(color)
     s.line.fill.background()
     s._element.spPr.append(OxmlElement("a:effectLst"))
+    # LibreOffice ignores the empty effectLst and draws the theme shadow from the shape style; drop the style.
+    s._element.remove(s._element.find("{http://schemas.openxmlformats.org/presentationml/2006/main}style"))
     return s
 
 

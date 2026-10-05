@@ -8,11 +8,16 @@ Numbers from work/results/facts.json; the network example is read from the decis
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
+from PIL import ImageFont
 from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
+from pptx.opc.constants import RELATIONSHIP_TYPE as RT
 from pptx.util import Inches
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,9 +25,20 @@ from zeroops import paths
 from zeroops import v4_paths as loc
 from zeroops.schema import Parsed
 from zeroops.policy import explain
-from build_cio_v2 import context, fill, digest, box, text, table, export_pdf, checks_rows
+from build_cio_v2 import context, fill, digest, box, text, export_pdf, checks_rows, INK
 
-NAVY, TEAL, GREY, LIGHT = "142E42", "007F82", "596A76", "EFF4F6"
+NAVY, TEAL, GREY, LIGHT, PALE, LINE_GREY = "142E42", "007F82", "596A76", "EFF4F6", "F8FAFB", "CCD7DD"
+L, R, W = .6, 12.733, 12.133        # content left edge, right edge and width (inches)
+BOTTOM, FOOT = 6.72, 6.9            # content stops at BOTTOM; the footer rule sits at FOOT
+GAP = .3                            # between cards
+LINE = 1.2                          # line pitch as a multiple of the font size, measured in the exported PDF
+
+# LibreOffice exports the deck with Noto Sans in place of Aptos, so text is measured with it to size the
+# boxes; Aptos is narrower, so what fits in the PDF also fits in PowerPoint.
+try:
+    FONTS = {b: ImageFont.truetype(f"NotoSans-{'Bold' if b else 'Regular'}.ttf", 1000) for b in (False, True)}
+except OSError:
+    FONTS = {}
 
 
 SECTION_ICON = {
@@ -35,37 +51,184 @@ SECTION_ICON = {
 }
 
 
-def rule(slide, y, x=.6, w=12.1, color="CCD7DD"):
+def span(value, size, bold=False):
+    """Width of one line of text, in inches."""
+    if FONTS:
+        return FONTS[bold].getlength(value) * size / 1000 / 72
+    return len(value) * size * (.6 if bold else .56) / 72
+
+
+def lines(value, size, width, bold=False):
+    n = 0
+    for para in value.split("\n"):
+        n, line = n + 1, ""
+        for word in para.split():
+            trial = f"{line} {word}".strip()
+            if line and span(trial, size, bold) > width * .99:
+                n, line = n + 1, word
+            else:
+                line = trial
+    return n
+
+
+def height(value, size, width, bold=False):
+    """Height of wrapped text, in inches, including the 3 pt after each paragraph that text() adds."""
+    if not value:
+        return 0
+    return (lines(value, size, width, bold) * LINE + .16) * size / 72 + (value.count("\n") + 1) * 3 / 72
+
+
+def write(slide, value, x, y, w, h, size, color=INK, bold=False, anchor=None, align=None):
+    shp = text(slide, value, x, y, w, h, size, color, bold)
+    if anchor is not None:
+        shp.text_frame.vertical_anchor = anchor
+    if align is not None:
+        for p in shp.text_frame.paragraphs:
+            p.alignment = align
+    return shp
+
+
+def link(shape, url):
+    for p in shape.text_frame.paragraphs:
+        for run in p.runs:
+            run.hyperlink.address = url
+
+
+def rule(slide, y, x=L, w=W, color=LINE_GREY):
     box(slide, x, y, w, .012, color)
 
 
+def arrow(slide, x, y, w=.2, h=.3, color=TEAL):
+    """A small chevron centred on (x, y), pointing right."""
+    return box(slide, x - w / 2, y - h / 2, w, h, color, MSO_SHAPE.CHEVRON)
+
+
+def card(slide, x, y, w, h, color=LIGHT, accent=TEAL):
+    box(slide, x, y, w, h, color)
+    box(slide, x, y, w, .05, accent)
+
+
+def cards(slide, items, top, styles, pad=.25, gap=GAP):
+    """A row of equal-height cards; styles gives (size, colour, bold) for each field of an item.
+    Returns the bottom edge."""
+    n = len(items)
+    w = (W - gap * (n - 1)) / n
+    inner = w - 2 * pad
+    heights = [max(height(item[f], size, inner, bold) for item in items)
+               for f, (size, _, bold) in enumerate(styles)]
+    used = [h for h in heights if h]
+    bottom = top + 2 * pad + .05 + sum(used) + .14 * (len(used) - 1)
+    for i, item in enumerate(items):
+        x = L + i * (w + gap)
+        card(slide, x, top, w, bottom - top)
+        y = top + pad + .05
+        for f, (size, color, bold) in enumerate(styles):
+            if heights[f]:
+                write(slide, item[f], x + pad, y, inner, heights[f], size, color, bold)
+                y += heights[f] + .14
+    return bottom
+
+
+def cell(slide, value, x, y, w, h, color, size, ink=INK, bold=False, pad=.12):
+    box(slide, x, y, w, h, color)
+    return write(slide, value, x + pad, y, w - 2 * pad, h, size, ink, bold, MSO_ANCHOR.MIDDLE)
+
+
+def auto_widths(headers, rows, font, width=W, least=.85):
+    """Column widths from each column's longest line: scaled down to the width if too wide, otherwise the
+    room left over goes to the text columns in proportion (a short code column such as "C10" keeps its width)."""
+    natural = [max(least, span(headers[c], 13, True), *(span(str(r[c]), font, c == 0) for r in rows)) + .3
+               for c in range(len(headers))]
+    if sum(natural) >= width:
+        return [n * width / sum(natural) for n in natural]
+    wide = sum(n for n in natural if n > 1.5)
+    return [n + (width - sum(natural)) * n / wide if n > 1.5 else n for n in natural]
+
+
+def row_heights(headers, rows, widths, font, least, pad=.16):
+    head = max(.42, max(height(h, 13, w - .24, True) for h, w in zip(headers, widths)) + .14)
+    body = [max(least, max(height(str(v), font, w - .24, c == 0)
+                           for c, (v, w) in enumerate(zip(row, widths))) + pad) for row in rows]
+    return head, body
+
+
+def grid(slide, headers, rows, x, y, widths, font, least=.36, pad=.16):
+    """Header row and banded rows; each row is as tall as its longest cell. Returns the bottom edge."""
+    head, body = row_heights(headers, rows, widths, font, least, pad)
+    offsets = [x]
+    for w in widths:
+        offsets.append(offsets[-1] + w)
+    for c, h in enumerate(headers):
+        cell(slide, h, offsets[c], y, widths[c] - .03, head - .03, NAVY, 13, "FFFFFF", True)
+    y += head
+    for r, row in enumerate(rows):
+        for c, value in enumerate(row):
+            cell(slide, str(value), offsets[c], y, widths[c] - .03, body[r] - .03,
+                 LIGHT if r % 2 == 0 else PALE, font, INK, c == 0)
+        y += body[r]
+    return y
+
+
 def frame(slide, spec):
+    """Section, title, subtitle and icon. Returns where the slide's content starts."""
     box(slide, 0, 0, 13.333, .08, TEAL)
-    text(slide, spec["section"].upper(), .6, .26, 11, .3, 10, TEAL, True)
-    text(slide, spec["title"], .6, .72, 11.25, .95, 25, NAVY, True)
+    write(slide, spec["section"].upper(), L, .34, 10, .22, 10, TEAL, True)
+    th = height(spec["title"], 25, 11.1, True)
+    write(slide, spec["title"], L, .62, 11.1, th, 25, NAVY, True)
+    y = .62 + th
     if spec.get("subtitle"):
-        text(slide, spec["subtitle"], .6, 1.66, 11.25, .42, 13, GREY)
+        sh = height(spec["subtitle"], 14, 11.1)
+        write(slide, spec["subtitle"], L, y + .04, 11.1, sh, 14, GREY)
+        y += .04 + sh
     ic = SECTION_ICON.get(spec.get("section", "").strip().upper())
     if ic and (paths.ICONS / f"{ic}.png").exists():
-        box(slide, 12.12, .24, .78, .78, LIGHT)
-        slide.shapes.add_picture(str(paths.ICONS / f"{ic}.png"), Inches(12.22), Inches(.34), Inches(.58), Inches(.58))
+        box(slide, R - .78, .3, .78, .78, LIGHT)
+        slide.shapes.add_picture(str(paths.ICONS / f"{ic}.png"), Inches(R - .68), Inches(.4), Inches(.58), Inches(.58))
+    return y + .38
 
 
 def footer(slide, spec, index, sources):
-    rule(slide, 6.5)
-    text(slide, "For discussion \u00b7 October 2026", .6, 7.16, 5, .19, 8, GREY)
-    for i, ref in enumerate(spec.get("refs", [])):
-        shp = text(slide, ref, 7.6 + i * .55, 7.13, .5, .23, 9, GREY)
-        shp.text_frame.paragraphs[0].runs[0].hyperlink.address = sources[ref]["url"]
-    text(slide, str(index), 12.4, 7.13, .3, .23, 9, GREY)
+    rule(slide, FOOT)
+    write(slide, "For discussion \u00b7 October 2026", L, 7.0, 5, .22, 9, GREY)
+    # One text box per link, laid out right to left: LibreOffice recolours links that share a paragraph.
+    x = R - .6
+    for i, ref in enumerate(reversed(spec.get("refs", []))):
+        w = span(ref, 9, True) + .04
+        x -= w
+        link(write(slide, ref, x, 7.0, w, .22, 9, TEAL, True), sources[ref]["url"])
+        w = .16 if i < len(spec["refs"]) - 1 else .6
+        x -= w
+        write(slide, "\u00b7" if i < len(spec["refs"]) - 1 else "Sources", x, 7.0, w - .06, .22, 9, GREY,
+              align=PP_ALIGN.RIGHT if w > .2 else PP_ALIGN.CENTER)
+    write(slide, str(index), R - .5, 7.0, .5, .22, 9, GREY, align=PP_ALIGN.RIGHT)
 
 
-def band(slide, spec, y):
-    if spec.get("takeaway"):
-        box(slide, .6, y, 12.13, .5, NAVY)
-        text(slide, spec["takeaway"], .78, y + .1, 11.8, .35, 13, "FFFFFF", True)
-        if spec.get("source"):
-            text(slide, spec["source"], .6, y + .55, 12.1, .3, 8, GREY)
+def band_height(spec, w=W):
+    if not spec.get("takeaway"):
+        return 0
+    return height(spec["takeaway"], 14, w - .5, True) + .28 + (.3 if spec.get("source") else 0)
+
+
+def band(slide, spec, y, x=L, w=W):
+    """The navy takeaway band, with its source line underneath. Returns the bottom edge."""
+    if not spec.get("takeaway"):
+        return y
+    h = height(spec["takeaway"], 14, w - .5, True) + .28
+    box(slide, x, y, w, h, NAVY)
+    write(slide, spec["takeaway"], x + .25, y, w - .5, h, 14, "FFFFFF", True, MSO_ANCHOR.MIDDLE)
+    y += h
+    if spec.get("source"):
+        write(slide, spec["source"], x, y + .08, w, .2, 9, GREY)
+        y += .3
+    return y
+
+
+def theme_links(prs, color):
+    """Hyperlinks take the theme's link colour (default pure blue); match the deck instead."""
+    theme = prs.slide_master.part.part_related_by(RT.THEME)
+    for tag in ("hlink", "folHlink"):
+        theme._blob = re.sub(rf"<a:{tag}>.*?</a:{tag}>".encode(),
+                             f'<a:{tag}><a:srgbClr val="{color}"/></a:{tag}>'.encode(), theme.blob, flags=re.S)
 
 
 def network_example():
@@ -102,16 +265,20 @@ def network_example():
             "action": p["proposed_action"], "checks": explain(parsed), "state": r.get("state", ""), "qa": qa}
 
 
-def table_with_band(slide, spec, y=2.25, avail=5.45):
+def table_with_band(slide, spec, top):
+    """The largest font (and roomiest rows) at which the table and its takeaway fit above the footer."""
     rows, headers = spec["rows"], spec["headers"]
     n = len(rows)
-    reserve = .9 if spec.get("takeaway") else .15
-    row_h = min(.83, (avail - y - reserve) / max(n, 1))
-    font = 16 if n <= 3 else (14 if n == 4 else (11 if n <= 8 else 9))
-    widths = spec.get("widths") or ([3.0, 4.0, 5.15] if len(headers) == 3 else [2.0, 10.1])
-    table(slide, headers, rows, x=.6, y=y, widths=widths, row_h=row_h, font=font)
-    if spec.get("takeaway"):
-        band(slide, spec, min(y + .51 + n * row_h + .12, 5.5))
+    room = BOTTOM - top - (band_height(spec) + .2 if spec.get("takeaway") else 0)
+    least = min(.62 if n <= 4 else .52, (room - .45) / n)
+    for font in range(15 if n <= 7 else 13, 10, -1):
+        widths = spec.get("widths") or auto_widths(headers, rows, font)
+        pad = next((p for p in (.16, .12, .08) if sum(row_heights(headers, rows, widths, font, least, p)[1]) + .45
+                    <= room), None)
+        if pad:
+            break
+    bottom = grid(slide, headers, rows, L, top, widths, font, least, pad or .08)
+    band(slide, spec, bottom + .2)
 
 
 def build_deck(story, facts, sources, target):
@@ -120,144 +287,165 @@ def build_deck(story, facts, sources, target):
     prs.core_properties.title = "AI in IT operations: the emerging role of a decision model"
     prs.core_properties.subject = "ZeroOps / Jev - CIO discussion edition (v4)"
     prs.core_properties.author = ""
+    theme_links(prs, TEAL)
     for index, spec in enumerate(story["slides"], 1):
         slide = prs.slides.add_slide(prs.slide_layouts[6])
         layout = spec["layout"]
         if layout == "cover":
             box(slide, 0, 0, 13.333, 7.5, NAVY)
+            box(slide, 0, 0, 13.333, .08, TEAL)
             text(slide, "IT OPERATIONS  /  CIO DISCUSSION  /  OCTOBER 2026", .9, .72, 12, .3, 12, "8BCCD0", True)
-            text(slide, spec["title"], .9, 2.5, 11.4, 1.5, 40, "FFFFFF", True)
-            rule(slide, 4.45, .9, 11.5, "527086")
-            text(slide, spec["subtitle"], .9, 4.72, 10.4, .8, 18, "C7D6DE")
+            th = height(spec["title"], 40, 11.4, True)
+            write(slide, spec["title"], .9, 4.2 - th, 11.4, th, 40, "FFFFFF", True)
+            box(slide, .9, 4.45, 1.2, .06, TEAL)
+            text(slide, spec["subtitle"], .9, 4.72, 10.4, .8, 20, "C7D6DE")
             slide.notes_slide.notes_text_frame.text = spec.get("notes", "")
             continue
         if layout == "divider":
             box(slide, 0, 0, 13.333, 7.5, NAVY)
-            text(slide, spec["title"], .9, 3.15, 11.4, 1.0, 34, "FFFFFF", True)
-            text(slide, spec.get("subtitle", ""), .9, 4.3, 10.4, .6, 16, "8BCCD0")
+            box(slide, 0, 0, 13.333, .08, TEAL)
+            write(slide, spec["title"], .9, 3.0, 11.4, .8, 36, "FFFFFF", True, MSO_ANCHOR.BOTTOM)
+            box(slide, .9, 3.98, 1.2, .06, TEAL)
+            text(slide, spec.get("subtitle", ""), .9, 4.22, 10.4, .6, 18, "8BCCD0")
             slide.notes_slide.notes_text_frame.text = spec.get("notes", "")
             continue
-        frame(slide, spec)
+        top = frame(slide, spec)
         if layout == "columns":
-            for i, (h, b) in enumerate(spec["items"]):
-                x = .6 + i * 4.15
-                rule(slide, 2.35, x, 3.72, TEAL)
-                text(slide, h, x, 2.6, 3.66, .8, 21, NAVY, True)
-                text(slide, b, x, 3.6, 3.65, 2.2, 16)
+            cards(slide, spec["items"], top, [(19, NAVY, True), (16, INK, False)], pad=.25)
         elif layout == "table":
-            table_with_band(slide, spec)
+            table_with_band(slide, spec, top)
         elif layout == "split":
-            for i, side in enumerate(("left", "right")):
-                x = .6 + i * 6.3
-                text(slide, spec[side + "_title"], x, 2.4, 5.7, .8, 21, NAVY, True)
-                rule(slide, 3.28, x, 5.7, TEAL)
-                text(slide, spec[side], x, 3.5, 5.6, 2.7, 17)
+            items = [(spec[side + "_title"], spec[side]) for side in ("left", "right")]
+            cards(slide, items, top, [(21, NAVY, True), (17, INK, False)], pad=.35, gap=.4)
         elif layout == "workflow":
+            # The middle stages are where the body says a decision component fits; they are filled teal.
+            n, gap = len(spec["stages"]), .4
+            w = (W - gap * (n - 1)) / n
+            hh = max(height(h, 19, w - .4, True) for h, _ in spec["stages"])
+            bh = max(height(b, 15, w - .4) for _, b in spec["stages"])
+            bottom = top + .3 + hh + .12 + bh + .3
             for i, (h, b) in enumerate(spec["stages"]):
-                x = .6 + i * 2.48
-                box(slide, x, 2.4, 2.22, 1.5, LIGHT)
-                text(slide, h, x + .12, 2.62, 2.0, .6, 18, TEAL, True)
-                text(slide, b, x + .12, 3.24, 2.0, .58, 14)
-                if i < 4:
-                    text(slide, "\u2192", x + 2.25, 2.95, .25, .3, 15)
-            text(slide, spec["body"], .6, 4.35, 11.9, 1.7, 17)
+                x, mid = L + i * (w + gap), 0 < i < n - 1
+                box(slide, x, top, w, bottom - top, TEAL if mid else LIGHT)
+                write(slide, h, x + .2, top + .3, w - .4, hh, 19, "FFFFFF" if mid else TEAL, True)
+                write(slide, b, x + .2, top + .3 + hh + .12, w - .4, bh, 15, "FFFFFF" if mid else INK)
+                if i < n - 1:
+                    arrow(slide, x + w + gap / 2, (top + bottom) / 2, color=GREY, w=.14, h=.26)
+            write(slide, spec["body"], L, bottom + .4, W, height(spec["body"], 18, W), 18)
         elif layout == "metrics":
             for i, (num, label) in enumerate(spec["items"]):
-                x = .6 + i * 4.15
-                text(slide, num, x, 2.3, 3.7, .85, 42, TEAL, True)
-                text(slide, label, x, 3.3, 3.7, 1.0, 16)
-            rule(slide, 4.5)
-            text(slide, spec["body"], .6, 4.68, 12.05, .8, 16)
-            band(slide, spec, 5.55)
+                x = L + i * (W + GAP) / 3
+                text(slide, num, x, top, 3.7, .85, 42, TEAL, True)
+                text(slide, label, x, top + 1.0, 3.7, 1.0, 16)
+            rule(slide, top + 2.2)
+            text(slide, spec["body"], L, top + 2.38, W, .8, 16)
+            band(slide, spec, top + 3.25)
         elif layout == "example_one":
             e = network_example()
-            text(slide, f'{e["id"]} \u00b7 {e["archetype"].replace("_", " ")} \u00b7 {e["outcome"]}',
-                 .6, 2.15, 12, .4, 16, NAVY, True)
-            table(slide, ["Check", "Value / rule", "Margin / result"], checks_rows(e),
-                  x=.6, y=2.6, widths=[3.2, 2.4, 2.6], row_h=.4, font=12)
-            band(slide, spec, 5.2)
+            write(slide, f'{e["id"]} · {e["archetype"].replace("_", " ")} · {e["outcome"]}',
+                  L, top, 8, .32, 16, NAVY, True)
+            widths = [3.3, 2.3, 2.3]
+            y = top + .48
+            bottom = grid(slide, ["Check", "Value / rule", "Margin / result"], checks_rows(e),
+                          L, y, widths, 13, least=.42)
+            x = L + sum(widths) + GAP + .05
+            box(slide, x, y, R - x, bottom - y, NAVY)
+            box(slide, x, y, .06, bottom - y, TEAL)
+            write(slide, spec["takeaway"], x + .35, y, R - x - .65, bottom - y, 17, "FFFFFF", True, MSO_ANCHOR.MIDDLE)
+            write(slide, spec.get("source", ""), L, bottom + .1, W, .2, 9, GREY)
         elif layout == "qa":
             e = network_example()
-            text(slide, spec["body"], .6, 2.35, 4.5, 4.0, 14)
-            table(slide, ["Question", "Answer"], e["qa"], x=5.35, y=2.3, widths=[3.4, 3.9],
-                  row_h=.3, font=10)
+            x = L + 4.55
+            write(slide, spec["body"], L, top, 4.15, height(spec["body"], 16, 4.15), 16)
+            grid(slide, ["Question", "Answer"], e["qa"], x, top, [3.9, R - x - 3.9], 12, least=.36, pad=.08)
         elif layout == "example_list":
             for i, key in enumerate(("auto", "stopped")):
                 e = facts["jev"]["examples"][key]
-                x = .6 + i * 6.3
-                text(slide, f'{e["id"]} \u00b7 {e["archetype"].replace("_", " ")} \u00b7 {e["outcome"]}',
-                     x, 2.2, 6.0, .38, 15, NAVY, True)
-                table(slide, ["Check", "Value / rule", "Margin / result"], checks_rows(e),
-                      x=x, y=2.66, widths=[2.3, 1.7, 1.95], row_h=.32, font=10)
-            band(slide, spec, 5.5)
+                x = L + i * (W + .4) / 2
+                write(slide, f'{e["id"]} · {e["archetype"].replace("_", " ")} · {e["outcome"]}',
+                      x, top, 5.9, .32, 15, NAVY, True)
+                grid(slide, ["Check", "Value / rule", "Margin / result"], checks_rows(e),
+                     x, top + .46, [2.3, 1.7, 1.93], 11, least=.32)
+            band(slide, spec, BOTTOM - band_height(spec))
         elif layout == "comparison":
             rows = []
             for b in facts["backends"].values():
                 rows.append([b["label"], f'{b["action_exact"]["k"]}/{b["n"]}',
                              f'{b["action_acceptable"]["k"]}/{b["n"]}', f'{b["auto"]}/{b["n"]}',
-                             f'{b["auto_exact"]}/{b["auto"]}' if b["auto"] else "\u2014",
+                             f'{b["auto_exact"]}/{b["auto"]}' if b["auto"] else "—",
                              f'{b["p50_ms"]:.0f}/{b["p95_ms"]:.0f}',
                              f'${b["cost_per_1k_usd"]:.3f}' if b["cost_per_1k_usd"] else "GPU uncosted"])
-            table(slide, ["Backend", "Exact action", "Acceptable*", "AUTO", "Exact / AUTO", "p50/p95 ms", "API $ / 1k"],
-                  rows, y=2.3, widths=[3.1, 1.43, 1.45, 1.05, 1.62, 1.62, 1.96], row_h=.5, font=13)
-            text(slide, "*Acceptable-action criteria were defined after the first run; use exact action match as the primary measure.",
-                 .6, 4.82, 12.2, .4, 11, GREY)
-            band(slide, spec, 5.2)
+            bottom = grid(slide, ["Backend", "Exact action", "Acceptable*", "AUTO", "Exact / AUTO", "p50/p95 ms",
+                                  "API $ / 1k"], rows, L, top, [2.9, 1.5, 1.5, 1.1, 1.5, 1.6, 2.033], 15, least=.56)
+            write(slide, "*Acceptable-action criteria were defined after the first run; use exact action match as "
+                  "the primary measure.", L, bottom + .1, W, .25, 11, GREY)
+            band(slide, spec, bottom + .5)
         elif layout == "integration":
+            n, gap = len(spec["blocks"]), .55
+            w = (W - gap * (n - 1)) / n
+            hh = max(height(h, 21, w - .5, True) for h, _ in spec["blocks"])
+            bh = max(height(b, 15, w - .5) for _, b in spec["blocks"])
+            bottom = top + .28 + hh + .1 + bh + .28
             for i, (h, b) in enumerate(spec["blocks"]):
-                x = .6 + i * 4.15
-                box(slide, x, 2.35, 3.75, 1.45, TEAL if i == 1 else LIGHT)
-                col = "FFFFFF" if i == 1 else NAVY
-                text(slide, h, x + .2, 2.55, 3.35, .5, 21, col, True)
-                text(slide, b, x + .2, 3.15, 3.35, .6, 15, col)
-                if i < 2:
-                    text(slide, "\u2192", x + 3.8, 2.85, .35, .4, 22)
-            text(slide, "Possible responses within the workflow", .6, 4.0, 11.9, .4, 15, GREY)
+                x, col = L + i * (w + gap), "FFFFFF" if i == 1 else NAVY
+                box(slide, x, top, w, bottom - top, TEAL if i == 1 else LIGHT)
+                write(slide, h, x + .25, top + .28, w - .5, hh, 21, col, True)
+                write(slide, b, x + .25, top + .28 + hh + .1, w - .5, bh, 15, col)
+                if i < n - 1:
+                    arrow(slide, x + w + gap / 2, (top + bottom) / 2)
+            y = bottom + .35
+            write(slide, "Possible responses within the workflow", L, y, W, .26, 13, GREY, True)
+            y += .38
             for i, value in enumerate(spec["responses"]):
-                text(slide, value, .6 + i * 4.15, 4.45, 3.9, .5, 19, NAVY, True)
-            text(slide, spec["body"], .6, 5.1, 11.9, 1.2, 16)
+                x = L + i * (w + gap)
+                box(slide, x, y, w, .6, PALE)
+                box(slide, x, y, .06, .6, TEAL)
+                write(slide, value, x + .25, y, w - .4, .6, 18, NAVY, True, MSO_ANCHOR.MIDDLE)
+            y += .6 + .35
+            write(slide, spec["body"], L, y, W, height(spec["body"], 16, W), 16)
         elif layout == "levers":
-            for i, (name, hyp, meas) in enumerate(spec["levers"]):
-                x = .6 + i * 3.12
-                box(slide, x, 2.3, 2.95, 2.2, LIGHT)
-                box(slide, x, 2.3, 2.95, .04, TEAL)
-                text(slide, name, x + .14, 2.44, 2.67, .4, 17, NAVY, True)
-                text(slide, hyp, x + .14, 2.9, 2.67, .9, 12)
-                text(slide, meas, x + .14, 3.82, 2.67, .6, 11, GREY)
-            text(slide, spec["body"], .6, 4.75, 12.05, 1.4, 16)
+            bottom = cards(slide, spec["levers"], top, [(18, NAVY, True), (15, INK, False), (12, GREY, False)],
+                           gap=.25)
+            write(slide, spec["body"], L, bottom + .4, W, height(spec["body"], 18, W), 18)
         elif layout == "stages":
-            for i, (name, benefit, measure) in enumerate(spec["levers"]):
-                x = .6 + i * 3.12
-                box(slide, x, 2.12, 2.95, 1.7, LIGHT)
-                box(slide, x, 2.12, 2.95, .04, TEAL)
-                text(slide, name, x + .14, 2.24, 2.67, .34, 16, NAVY, True)
-                text(slide, benefit, x + .14, 2.62, 2.67, .6, 11)
-                text(slide, measure, x + .14, 3.24, 2.67, .5, 10, GREY)
-            y = 3.96
-            for h, b in spec["stages"]:
-                box(slide, .6, y, 12.13, .52, "F8FAFB")
-                text(slide, h, .78, y + .05, 3.9, .42, 12.5, TEAL, True)
-                text(slide, b, 4.7, y + .05, 7.9, .44, 11)
-                y += .58
-            text(slide, spec["help"], .6, y + .02, 12.1, .48, 11, GREY)
+            # Each stage card ends in the decision it leads to, with a notch pointing into it.
+            n = len(spec["levers"])
+            bottom = cards(slide, spec["levers"], top, [(18, NAVY, True), (14, TEAL, True), (13, INK, False)], pad=.2)
+            w = (W - GAP * (n - 1)) / n
+            qh = max(height(q, 15, w - .5, True) for _, q in spec["stages"])
+            dh = .3 + .24 + .04 + qh + .2
+            for i, (h, q) in enumerate(spec["stages"]):
+                x = L + i * (w + GAP)
+                box(slide, x, bottom, w, dh, NAVY)
+                box(slide, x + w / 2 - .18, bottom, .36, .15, LIGHT, MSO_SHAPE.ISOSCELES_TRIANGLE).rotation = 180
+                write(slide, h.upper(), x + .25, bottom + .3, w - .5, .24, 11, "8BCCD0", True)
+                write(slide, q, x + .25, bottom + .58, w - .5, qh, 15, "FFFFFF", True)
+            y = bottom + dh + .28
+            write(slide, spec["help"], L, y, W, height(spec["help"], 13, W), 13, GREY)
         elif layout == "video":
-            px, py, pw, ph = 5.15, 2.4, 7.6, 4.275
+            pw = 7.6
+            ph, px = pw * 9 / 16, R - pw
             if loc.DEMO_VIDEO.exists():
-                slide.shapes.add_movie(str(loc.DEMO_VIDEO), Inches(px), Inches(py), Inches(pw), Inches(ph),
+                slide.shapes.add_movie(str(loc.DEMO_VIDEO), Inches(px), Inches(top), Inches(pw), Inches(ph),
                                        poster_frame_image=str(loc.DEMO_POSTER) if loc.DEMO_POSTER.exists() else None,
                                        mime_type="video/mp4")
-            text(slide, spec["body"], .6, 2.4, 4.3, 3.7, 15)
-            text(slide, spec.get("runtime", ""), .6, 6.2, 4.3, .3, 11, GREY)
+            write(slide, spec["body"], L, top, px - L - .4, height(spec["body"], 16, px - L - .4), 16)
+            if spec.get("runtime"):
+                rule(slide, top + ph - .42, L, px - L - .4, TEAL)
+                write(slide, spec["runtime"], L, top + ph - .3, px - L - .4, .3, 11, GREY,
+                      anchor=MSO_ANCHOR.BOTTOM)
         elif layout == "sources":
+            per_col = 4
+            w = (W - .4) / 2
             for i, source in enumerate(sources.values()):
-                x, y = .6 + (i // 4) * 6.3, 2.35 + (i % 4) * .85
-                shp = text(slide, source["id"] + "  " + source["name"], x, y, 5.8, .55, 15, NAVY, True)
-                for p in shp.text_frame.paragraphs:
-                    for run in p.runs:
-                        run.hyperlink.address = source["url"]
-                text(slide, "Linked primary source", x, y + .5, 5.7, .24, 9, GREY)
-            text(slide, "Example figures: saved facts and the results report; corpus " + facts["corpus_version"],
-                 .6, 5.95, 12, .3, 10, GREY)
+                x, y = L + (i // per_col) * (w + .4), top + (i % per_col) * .9
+                box(slide, x, y, w, .76, PALE)
+                box(slide, x, y, .62, .76, TEAL)
+                write(slide, source["id"], x, y, .62, .76, 15, "FFFFFF", True, MSO_ANCHOR.MIDDLE, PP_ALIGN.CENTER)
+                link(write(slide, source["name"], x + .85, y + .13, w - 1.0, .3, 15, NAVY, True), source["url"])
+                write(slide, "Linked primary source", x + .85, y + .46, w - 1.0, .2, 10, GREY)
+            write(slide, "Example figures: saved facts and the results report; corpus " + facts["corpus_version"],
+                  L, top + per_col * .9 + .1, W, .25, 11, GREY)
         footer(slide, spec, index, sources)
         notes = spec["notes"] + "\n\n" + "\n".join(sources[r]["name"] + ": " + sources[r]["url"] for r in spec.get("refs", []))
         slide.notes_slide.notes_text_frame.text = notes
