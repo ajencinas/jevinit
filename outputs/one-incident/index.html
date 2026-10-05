@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Two Kinds of Output</title>
+<style>
+  :root{--navy:#0a2540;--teal:#00838a;--red:#c83737;--green:#1b8a60;--amber:#b86a00;--gray:#5b6472;--line:#e2e6ea;--ink:#111827;--bg:#f7f9fb}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  header{padding:18px 28px;background:var(--navy);color:#fff}
+  header h1{margin:0;font-size:22px}
+  header .back{display:inline-block;font-size:12.5px;color:#9ee6e6;text-decoration:none;margin-bottom:6px}
+  header .back:hover,header .back:focus-visible{text-decoration:underline}
+  header .sub{color:#d3dde8;font-size:14px;margin-top:6px;max-width:900px;line-height:1.5}
+  .meta{padding:10px 28px;background:#fff;border-bottom:1px solid var(--line);font-size:13px;color:#334155}
+  .wrap{padding:18px 28px;max-width:1400px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px;min-width:0;overflow-x:auto}
+  h2{margin:0 0 4px;font-size:16px;color:var(--navy)}
+  h3{margin:14px 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--gray)}
+  .kind{font-size:13px;color:#334155;margin-bottom:8px;line-height:1.45}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:5px 6px;border-bottom:1px solid #eef1f4;text-align:left;vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--gray);font-weight:600}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+  .t{color:var(--gray);font-size:12px}
+  .pass{color:var(--green);font-weight:700}.fail{color:var(--red);font-weight:700}
+  .close{display:inline-block;margin-left:4px;padding:0 6px;border-radius:999px;background:#fff4e0;color:var(--amber);font-size:11px;font-weight:700}
+  pre{margin:6px 0 0;font-family:ui-monospace,Menlo,monospace;font-size:12.5px;white-space:pre-wrap;background:#0f172a;color:#d7e3f4;border-radius:10px;padding:12px;overflow:auto}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:13px;margin-top:10px}
+  .kv .k{color:var(--gray)}
+  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:700;color:#fff}
+  .badge.ok{background:var(--green)}.badge.no{background:var(--red)}
+  .outcome{margin-top:10px;padding:10px 12px;border-radius:10px;background:#eef6f6;border-left:5px solid var(--teal);font-size:13.5px}
+  .note{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f4f6f8;border-left:5px solid var(--gray);font-size:13.5px;line-height:1.5}
+  .lat{display:grid;grid-template-columns:200px 1fr 70px;gap:8px;align-items:center;font-size:13px;margin:6px 0}
+  .lat .b{height:14px;border-radius:4px;background:var(--navy)}
+  ul{margin:6px 0 0 18px;padding:0;font-size:13.5px;line-height:1.55}
+  footer{font-size:12px;color:var(--gray);padding:0 28px 24px}
+  code{font-size:12px}
+  @media (max-width:900px){ .grid{grid-template-columns:1fr} header,.meta,.wrap{padding-left:16px;padding-right:16px}
+    .lat{grid-template-columns:120px 1fr 60px} .m{display:none} td,th{padding:5px 4px} }
+</style></head>
+<body>
+<header>
+  <a class="back" href="../index.html">&larr; All deliverables</a>
+  <h1>One incident, two kinds of output</h1>
+  <div class="sub">One recorded call each on the same synthetic incident: Jev with 12 typed questions, and a
+    general chat model asked for 5 fields as JSON. The point is what each hands back for a gate in code to check.</div>
+</header>
+<div class="meta">Recorded 4 Oct 2026, 15:18 UTC · INC-0001 (bad_deploy) · one call each from one workstation (n=1), so the
+  timings and costs are illustrative · corpus 0b4839761e06</div>
+<div class="wrap">
+  <div class="card">
+    <h2>The incident text both models received</h2>
+    <pre>INCIDENT ALERT
+service: payment-svc
+summary: error rate on payment-svc rose sharply right after a deploy
+
+METRICS:
+  p99 latency 180ms -&gt; 1.9s; 5xx 0.3% -&gt; 12.4%; pods healthy
+
+CHANGES:
+  payment-svc v6.2.0 deployed 6 min before onset
+
+LOGS:
+  NullPointerException in PaymentController.capture line 214
+
+DEPENDENCIES:
+  payment-svc -&gt; redis-cache</pre>
+  </div>
+  <div class="grid">
+    <section class="card">
+      <h2>Jev via OpenRouter <span class="t">typesafe/jev-1.13-20260917</span></h2>
+      <div class="kind">Asked 12 typed questions (<code>zeroops/schema.py</code>). Each answer comes back as a
+        choice or a score with a probability, or as a yes-probability.</div>
+      <table><thead><tr><th>Question</th><th>Type</th><th>Answer</th><th>Prob.</th><th class="m">Meaning</th></tr></thead>
+        <tbody><tr><td>real_incident</td><td class='t'>noul</td><td><b>0.94</b></td><td class='num'>0.94</td><td class='t m'>P(yes)</td></tr><tr><td>failure_category</td><td class='t'>choice</td><td><b>app</b></td><td class='num'>1.00</td><td class='t m'>P(this choice)</td></tr><tr><td>suspect_component</td><td class='t'>choice</td><td><b>payment-svc</b></td><td class='num'>0.99</td><td class='t m'>P(this choice)</td></tr><tr><td>root_cause</td><td class='t'>choice</td><td><b>bad_deploy</b></td><td class='num'>1.00</td><td class='t m'>P(this choice)</td></tr><tr><td>deploy_correlated</td><td class='t'>noul</td><td><b>0.95</b></td><td class='num'>0.95</td><td class='t m'>P(yes)</td></tr><tr><td>severity</td><td class='t'>score</td><td><b>2.12 on 0–3</b></td><td class='num'>0.88</td><td class='t m'>P(nearest level)</td></tr><tr><td>blast_radius</td><td class='t'>score</td><td><b>1.00 on 0–3</b></td><td class='num'>1.00</td><td class='t m'>P(nearest level)</td></tr><tr><td>customer_impact</td><td class='t'>noul</td><td><b>0.84</b></td><td class='num'>0.84</td><td class='t m'>P(yes)</td></tr><tr><td>safe_to_autorollback</td><td class='t'>noul</td><td><b>0.71</b></td><td class='num'>0.71</td><td class='t m'>P(yes)</td></tr><tr><td>proposed_action</td><td class='t'>choice</td><td><b>rollback</b></td><td class='num'>1.00</td><td class='t m'>P(this choice)</td></tr><tr><td>action_risk</td><td class='t'>score</td><td><b>0.12 on 0–2</b></td><td class='num'>0.82</td><td class='t m'>P(nearest level)</td></tr><tr><td>needs_page</td><td class='t'>noul</td><td><b>0.87</b></td><td class='num'>0.87</td><td class='t m'>P(yes)</td></tr></tbody></table>
+      <h3>What the gate in zeroops/policy.py does with it</h3>
+      <table><thead><tr><th>Check</th><th>Value</th><th>Result</th><th>Margin</th></tr></thead>
+        <tbody><tr><td>needs_page &lt; 0.9</td><td class='num'>0.87</td><td class='pass'>PASS <span class='close'>close</span></td><td class='num'>+0.03</td></tr><tr><td>real_incident &gt;= 0.5</td><td class='num'>0.94</td><td class='pass'>PASS</td><td class='num'>+0.44</td></tr><tr><td>action_conf &gt;= 0.6</td><td class='num'>1.00</td><td class='pass'>PASS</td><td class='num'>+0.40</td></tr><tr><td>action_risk &lt;= 1</td><td class='num'>0.12</td><td class='pass'>PASS</td><td class='num'>+0.88</td></tr><tr><td>severity &lt;= 2.5</td><td class='num'>2.12</td><td class='pass'>PASS</td><td class='num'>+0.38</td></tr><tr><td>deploy_correlated &gt;= 0.8</td><td class='num'>0.95</td><td class='pass'>PASS</td><td class='num'>+0.15</td></tr><tr><td>safe_to_autorollback &gt;= 0.7</td><td class='num'>0.71</td><td class='pass'>PASS <span class='close'>close</span></td><td class='num'>+0.01</td></tr></tbody></table>
+      <div class="outcome"><b>AUTO · rollback.</b> deploy_correlated=0.95 &amp; safe_to_autorollback=0.71 clear the rollback gate. <span class="t">(our label for this incident: rollback, safe to automate)</span></div>
+      <div class="kv"><span class="k">time</span><span>216 ms</span>
+        <span class="k">tokens</span><span>1,380 in / 484 out</span>
+        <span class="k">cost</span><span>Billed $0.000058: the 1,380 input tokens at $0.042 per million, the same flat rate as all 56 calls in the evaluation run. The usage block also reports 484 output tokens; they were not billed.</span></div>
+    </section>
+    <section class="card">
+      <h2>Chat model <span class="t">openai/gpt-4o-mini</span></h2>
+      <div class="kind">Asked for 5 fields (real_incident, failure_category, root_cause, severity, action) as a JSON object, with OpenRouter's strict
+        JSON-schema mode, temperature 0, not streamed. It saw the same incident and the same question list as context.</div>
+      <h3>The reply, as returned</h3>
+      <pre>{
+  &quot;real_incident&quot;: true,
+  &quot;failure_category&quot;: &quot;app&quot;,
+  &quot;root_cause&quot;: &quot;bad_deploy&quot;,
+  &quot;severity&quot;: 2,
+  &quot;action&quot;: &quot;rollback&quot;
+}</pre>
+      <div style="margin-top:8px"><span class='badge ok'>parsed as JSON</span></div>
+      <div class="note">The reply has a value per field and no probability. A gate that wants to act only
+        when the model is sure would need another signal: a score the model reports about itself, token
+        log-probabilities (not requested here), or a second call.</div>
+      <div class="kv"><span class="k">time</span><span>889 ms</span>
+        <span class="k">tokens</span><span>1,192 in / 43 out</span>
+        <span class="k">cost</span><span>$0.000205 (billed by OpenRouter)</span>
+        <span class="k">served by</span><span>OpenAI · openai/gpt-4o-mini</span></div>
+    </section>
+  </div>
+  <div class="card">
+    <h2>Did they give the same answers?</h2>
+    <div class="kind">On this incident they gave the same answer on all 5 fields both were asked. Jev's real_incident and severity are probabilities and scores; they are
+      rounded here to compare with the chat model's yes/no and integer.</div>
+    <table><thead><tr><th>Field</th><th>Jev</th><th>Chat model</th><th></th></tr></thead><tbody><tr><td>real incident?</td><td><b>yes</b> <span class='t'>(0.94)</span></td><td><b>yes</b></td><td class='pass'>same</td></tr><tr><td>failure category</td><td><b>app</b></td><td><b>app</b></td><td class='pass'>same</td></tr><tr><td>root cause</td><td><b>bad_deploy</b></td><td><b>bad_deploy</b></td><td class='pass'>same</td></tr><tr><td>severity (0–3)</td><td><b>2</b> <span class='t'>(2.12)</span></td><td><b>2</b></td><td class='pass'>same</td></tr><tr><td>first action</td><td><b>rollback</b></td><td><b>rollback</b></td><td class='pass'>same</td></tr></tbody></table>
+  </div>
+  <div class="card">
+    <h2>Recorded time per call</h2>
+    <div class="lat"><span>Jev via OpenRouter</span><span class="b" style="width:24.3%"></span><span>216 ms</span></div>
+    <div class="lat"><span>openai/gpt-4o-mini</span><span class="b" style="width:100.0%;background:var(--gray)"></span><span>889 ms</span></div>
+    <div class="kind" style="margin-top:8px">Wall-clock time of one request each, measured from the client. Across the
+      56-incident evaluation run, Jev via OpenRouter took 134 ms at the median and 406 ms at p95.
+      The chat model was timed once.</div>
+  </div>
+  <div class="card">
+    <h2>What this comparison can't show</h2>
+    <ul>
+      <li>Which model is more accurate or faster in general. This is one incident and one call each.</li>
+      <li>A like-for-like workload. The chat model answered 5 fields and Jev 12, so token counts and times
+        measure different jobs.</li>
+      <li>How often a chat reply fails to parse. Strict JSON-schema mode makes that rare.</li>
+      <li>That Jev's reply needs no handling. It is JSON as well, parsed by <code>zeroops/schema.py</code>; a missing or
+        malformed answer now sends the incident to a person.</li>
+      <li>Whether Jev's probabilities can be trusted as stated. On our 56 incidents that is mixed; see the calibration
+        chart in the Threshold Lab.</li>
+    </ul>
+  </div>
+</div>
+<footer>Our measurement. Trace: <code>work/results/race_trace.json</code>. Page built by <code>scripts/build_race.py</code>
+  from that trace with no network calls; <code>--live</code> re-records it.</footer>
+</body></html>

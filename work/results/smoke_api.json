@@ -1,0 +1,103 @@
+{
+  "native_jev": {
+    "ok": true,
+    "reason": "typed answers well-formed (choice+confidence, score+legend, noul)",
+    "latency_ms": 190.5790579985478,
+    "model": "jev-1.13.0",
+    "provider": null,
+    "usage": {
+      "input_tokens": 538,
+      "output_tokens": 103
+    },
+    "answers": {
+      "real_incident": {
+        "type": "noul",
+        "noul": 0.95
+      },
+      "category": {
+        "type": "choice",
+        "choice": "config",
+        "confidence": 1.0,
+        "probabilities": {
+          "other": 0.0,
+          "network": 0.0,
+          "config": 1.0,
+          "capacity": 0.0,
+          "app": 0.0
+        }
+      },
+      "severity": {
+        "type": "score",
+        "score": 2.3,
+        "confidence": 0.69,
+        "legend": {
+          "0": "SEV4 cosmetic",
+          "1": "SEV3 minor",
+          "2": "SEV2 major",
+          "3": "SEV1 critical outage"
+        },
+        "probabilities": {
+          "0": 0.0,
+          "1": 0.0,
+          "2": 0.69,
+          "3": 0.31
+        }
+      },
+      "deploy_correlated": {
+        "type": "noul",
+        "noul": 0.9
+      }
+    }
+  },
+  "openrouter_jev": {
+    "ok": true,
+    "reason": "typed answers well-formed (choice+confidence, score+legend, noul)",
+    "latency_ms": 364.1391820019635,
+    "model": "typesafe/jev-1.13-20260917",
+    "provider": "TypeSafe",
+    "usage": {
+      "input_tokens": 538,
+      "output_tokens": 103,
+      "cost": 2.2596e-05
+    },
+    "answers": {
+      "real_incident": {
+        "type": "noul",
+        "noul": 0.94
+      },
+      "category": {
+        "type": "choice",
+        "choice": "config",
+        "probabilities": {
+          "app": 0,
+          "config": 1,
+          "other": 0,
+          "network": 0,
+          "capacity": 0
+        },
+        "confidence": 1
+      },
+      "severity": {
+        "type": "score",
+        "score": 2.33,
+        "legend": {
+          "0": "SEV4 cosmetic",
+          "1": "SEV3 minor",
+          "2": "SEV2 major",
+          "3": "SEV1 critical outage"
+        },
+        "probabilities": {
+          "0": 0,
+          "1": 0,
+          "2": 0.66,
+          "3": 0.34
+        },
+        "confidence": 0.66
+      },
+      "deploy_correlated": {
+        "type": "noul",
+        "noul": 0.9
+      }
+    }
+  }
+}

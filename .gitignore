@@ -1,0 +1,18 @@
+# --- secrets: never commit ---
+.env
+.env.*
+!.env.example
+
+# --- virtualenv, caches, build artefacts ---
+/jev/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+node_modules/
+*.egg-info/
+
+# --- heavy/local-only, relocated outside the repo ---
+/third_party/
+
+# --- throwaway eval runs (--limit, failed runs) ---
+work/results/scratch/

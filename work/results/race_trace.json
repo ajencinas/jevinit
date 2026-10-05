@@ -1,0 +1,243 @@
+{
+  "measured_at": "2026-10-04T15:18:20+00:00",
+  "corpus_version": "0b4839761e06",
+  "incident": {
+    "id": "INC-0001",
+    "archetype": "bad_deploy",
+    "state": "INCIDENT ALERT\nservice: payment-svc\nsummary: error rate on payment-svc rose sharply right after a deploy\n\nMETRICS:\n  p99 latency 180ms -> 1.9s; 5xx 0.3% -> 12.4%; pods healthy\n\nCHANGES:\n  payment-svc v6.2.0 deployed 6 min before onset\n\nLOGS:\n  NullPointerException in PaymentController.capture line 214\n\nDEPENDENCIES:\n  payment-svc -> redis-cache\n",
+    "ground_truth": {
+      "real_incident": true,
+      "failure_category": "app",
+      "suspect_component": "payment-svc",
+      "root_cause": "bad_deploy",
+      "severity": 2,
+      "correct_action": "rollback",
+      "auto_safe": true
+    }
+  },
+  "jev": {
+    "ok": true,
+    "ms": 216.0,
+    "cost": 5.796e-05,
+    "model": "typesafe/jev-1.13-20260917",
+    "provider": "TypeSafe",
+    "endpoint": "OpenRouter /api/v1/systemone",
+    "input_tokens": 1380,
+    "output_tokens": 484,
+    "error": null,
+    "answers": {
+      "real_incident": {
+        "type": "noul",
+        "noul": 0.94
+      },
+      "failure_category": {
+        "type": "choice",
+        "choice": "app",
+        "probabilities": {
+          "storage": 0,
+          "network": 0,
+          "capacity": 0,
+          "app": 1,
+          "security": 0,
+          "other": 0,
+          "config": 0
+        },
+        "confidence": 1
+      },
+      "suspect_component": {
+        "type": "choice",
+        "choice": "payment-svc",
+        "probabilities": {
+          "auth-svc": 0,
+          "checkout-api": 0,
+          "ingress": 0,
+          "payment-svc": 0.99,
+          "redis-cache": 0.01,
+          "db-primary": 0,
+          "cart-svc": 0,
+          "search-svc": 0
+        },
+        "confidence": 0.99
+      },
+      "root_cause": {
+        "type": "choice",
+        "choice": "bad_deploy",
+        "probabilities": {
+          "resource_exhaustion": 0,
+          "dns_failure": 0,
+          "config_error": 0,
+          "data_corruption": 0,
+          "dependency_outage": 0,
+          "bad_deploy": 1,
+          "certificate_expiry": 0,
+          "network_partition": 0,
+          "security_incident": 0,
+          "other": 0,
+          "traffic_spike": 0
+        },
+        "confidence": 1
+      },
+      "deploy_correlated": {
+        "type": "noul",
+        "noul": 0.95
+      },
+      "severity": {
+        "type": "score",
+        "score": 2.12,
+        "probabilities": {
+          "0": 0,
+          "1": 0,
+          "2": 0.88,
+          "3": 0.12
+        },
+        "confidence": 0.88
+      },
+      "blast_radius": {
+        "type": "score",
+        "score": 1,
+        "probabilities": {
+          "0": 0,
+          "1": 1,
+          "2": 0,
+          "3": 0
+        },
+        "confidence": 1
+      },
+      "customer_impact": {
+        "type": "noul",
+        "noul": 0.84
+      },
+      "safe_to_autorollback": {
+        "type": "noul",
+        "noul": 0.71
+      },
+      "proposed_action": {
+        "type": "choice",
+        "choice": "rollback",
+        "probabilities": {
+          "restart": 0,
+          "failover": 0,
+          "patch_config": 0,
+          "observe": 0,
+          "scale_up": 0,
+          "rollback": 1,
+          "drain": 0,
+          "escalate": 0
+        },
+        "confidence": 1
+      },
+      "action_risk": {
+        "type": "score",
+        "score": 0.12,
+        "probabilities": {
+          "0": 0.89,
+          "1": 0.1,
+          "2": 0.01
+        },
+        "confidence": 0.82
+      },
+      "needs_page": {
+        "type": "noul",
+        "noul": 0.87
+      }
+    },
+    "missing": [],
+    "gate": {
+      "outcome": "AUTO",
+      "action": "rollback",
+      "rationale": "deploy_correlated=0.95 & safe_to_autorollback=0.71 clear the rollback gate",
+      "checks": [
+        {
+          "check": "needs_page",
+          "value": 0.87,
+          "op": "<",
+          "threshold": 0.9,
+          "passed": true,
+          "margin": 0.03
+        },
+        {
+          "check": "real_incident",
+          "value": 0.94,
+          "op": ">=",
+          "threshold": 0.5,
+          "passed": true,
+          "margin": 0.44
+        },
+        {
+          "check": "action_conf",
+          "value": 1.0,
+          "op": ">=",
+          "threshold": 0.6,
+          "passed": true,
+          "margin": 0.4
+        },
+        {
+          "check": "action_risk",
+          "value": 0.12,
+          "op": "<=",
+          "threshold": 1.0,
+          "passed": true,
+          "margin": 0.88
+        },
+        {
+          "check": "severity",
+          "value": 2.12,
+          "op": "<=",
+          "threshold": 2.5,
+          "passed": true,
+          "margin": 0.38
+        },
+        {
+          "check": "deploy_correlated",
+          "value": 0.95,
+          "op": ">=",
+          "threshold": 0.8,
+          "passed": true,
+          "margin": 0.15
+        },
+        {
+          "check": "safe_to_autorollback",
+          "value": 0.71,
+          "op": ">=",
+          "threshold": 0.7,
+          "passed": true,
+          "margin": 0.01
+        }
+      ]
+    }
+  },
+  "chat": {
+    "ok": true,
+    "ms": 888.7,
+    "cost": 0.0002046,
+    "model": "openai/gpt-4o-mini",
+    "provider": "OpenAI",
+    "request": {
+      "fields": [
+        "real_incident",
+        "failure_category",
+        "root_cause",
+        "severity",
+        "action"
+      ],
+      "temperature": 0,
+      "stream": false,
+      "response_format": "json_schema (strict)",
+      "system": "You are an SRE triage assistant. Return ONLY a JSON object with keys real_incident (bool), failure_category (string), root_cause (string), severity (0-3 int), action (string). Decide from the incident state."
+    },
+    "prompt_tokens": 1192,
+    "completion_tokens": 43,
+    "reasoning_tokens": 0,
+    "content": "{\n  \"real_incident\": true,\n  \"failure_category\": \"app\",\n  \"root_cause\": \"bad_deploy\",\n  \"severity\": 2,\n  \"action\": \"rollback\"\n}",
+    "parsed": {
+      "real_incident": true,
+      "failure_category": "app",
+      "root_cause": "bad_deploy",
+      "severity": 2,
+      "action": "rollback"
+    },
+    "parse_error": null,
+    "error": null
+  },
+  "chat_model": "openai/gpt-4o-mini"
+}

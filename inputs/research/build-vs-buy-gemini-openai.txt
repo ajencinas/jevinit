@@ -1,0 +1,356 @@
+Incident Detection and Automation Platforms: Build-vs-Buy Research for AIOps, ITOM, and ITSM
+Executive summary
+The AIOps/ITOM/ITSM market is not one homogeneous category. The products in scope fall into four materially different architectural classes: systems of record and workflow such as ServiceNow and BMC Helix; telemetry-centered observability platforms such as Dynatrace, Splunk ITSI, Datadog, New Relic, Elastic, and IBM Instana; event-correlation overlays such as BigPanda and the Moogsoft lineage now incorporated into Dell APEX AIOps; and incident-engagement/routing systems such as PagerDuty and, historically, Opsgenie. ServiceNow spans more of these layers than most competitors because Event Management, ITOM AIOps, Discovery, Service Mapping, CMDB, ITSM, IntegrationHub, and workflow capabilities share the same platform and data model. [1]
+That breadth is also why attempting a literal, component-for-component custom replacement of ServiceNow is usually the wrong target. The most practical components to build or assemble are the signal-processing edges: telemetry collection, event normalization, deterministic deduplication, rules/threshold detection, enrichment, basic statistical anomaly detection, routing policy, and execution of runbooks. OpenTelemetry already provides a vendor-neutral generation/collection/export layer; Prometheus and Alertmanager provide rule evaluation plus grouping/deduplication/routing; OpenSearch and Elastic provide programmable storage, detection and alerting; and StackStorm provides event-driven actions, rules, workflows, policies and audit history. [2]
+Conversely, the least attractive things to rebuild from scratch are enterprise CMDB/discovery/reconciliation, topology-aware causal correlation, a globally reliable on-call/paging service, and a complete ITSM workflow platform. These are deceptively difficult because the hard problem is not the obvious algorithm or CRUD interface: it is continuously reconciling conflicting identities and relationships, maintaining temporal topology, handling ownership and lifecycle, preserving audit/RBAC/approval semantics, tuning correlation against changing systems, and operating the service itself at incident-time reliability. Research systems such as DeepLog show that sophisticated anomaly models can be implemented independently, while work such as CausalRCA demonstrates increasingly capable causal root-cause algorithms; neither removes the production requirements around telemetry quality, topology accuracy, concept drift, feedback loops and operational governance. [3]
+The best hybrid strategy is therefore to decouple the signal plane from the system-of-record plane. Introduce OpenTelemetry and a canonical event model first; dual-publish telemetry/events; build normalization, enrichment and deterministic deduplication outside the incumbent; run custom correlation in shadow mode; externalize remediation into Git-managed automation; and only then selectively cut over detection and correlation. Continue to use ServiceNow/BMC/PagerDuty—or whichever products already carry organizational trust—for ticket state, approvals, paging, audit and possibly CMDB until the replacement components have demonstrated measured parity. ServiceNow itself documents that Event Management can be introduced before a CMDB is fully mature and can later exploit Discovery/Service Mapping, which reinforces the architectural separability of these concerns. [4]
+There are two important 2026 portfolio caveats. Opsgenie is a migration case, not a strategic greenfield choice: Atlassian ended new sales on June 4, 2025 and has announced end of support/access for April 5, 2027, with its incident-management capabilities being moved into Jira Service Management. [5] Moogsoft likewise should no longer be evaluated as an independent greenfield vendor in the form it was several years ago: Dell announced its acquisition in 2023, and Dell documentation now identifies Moogsoft Cloud Service as Dell APEX AIOps Incident Management. [6]
+The resulting recommendation is:
+The complexity and effort estimates later in this report are analytical estimates for a large enterprise, not vendor implementation quotes.
+Market architecture and vendor assessments
+ServiceNow
+Architecture and data plane. ServiceNow combines a SaaS workflow/data platform with Event Management, ITOM AIOps, Discovery, Service Mapping, CMDB and ITSM. Event Management accepts events from external monitoring systems through connectors/listeners and converts them into alerts; the platform can associate those alerts with configuration items and services. Agent Client Collector, MID Server and related ingestion mechanisms provide reach into customer networks and on-premises environments. [7]
+Detection and correlation. Metric Intelligence supplies dynamic threshold/anomaly functions, Health Log Analytics applies machine-learning-oriented analysis to logs, and Event Management correlates/group alerts before downstream ITSM action. CMDB and Service Mapping increase the amount of topology and business-impact context available to that analysis. [8]
+Automation and extensibility. IntegrationHub, REST/SOAP APIs, webhooks and prebuilt connectors expose data and actions outside the platform; ServiceNow's developer environment also supports custom applications and platform APIs. [9] This is one of ServiceNow's major advantages over a narrowly focused observability product: the correlated event can remain inside the same governance model as incident, change, approval and CMDB workflows. [4]
+CMDB. Discovery and reconciliation are important differentiators. ServiceNow positions CMDB as a trusted CI system of record and supports automated population and reconciliation rather than treating topology merely as transient observability metadata. [10]
+Hosting/licensing and migration. It is a proprietary subscription platform with cloud-hosted control-plane services and hybrid connectivity through components such as MID Server/ACC. The most rational partial replacement is to leave ServiceNow as the ITSM/CMDB system of record while externalizing telemetry, detection, correlation or remediation. ServiceNow's own guidance explicitly permits beginning Event Management before the CMDB is mature, which also means the inverse architecture—external signal processing feeding ServiceNow incidents—is technically natural. [11]
+Custom-replacement assessment: high feasibility for signal collection, rules, enrichment and external runbooks; medium for alert correlation; low for replacing mature CMDB/reconciliation and the complete workflow/governance layer.
+Splunk IT Service Intelligence
+Architecture. ITSI is built around Splunk's search/analytics data plane, adding service/KPI modeling, Service Analyzer, notable-event processing, adaptive thresholds and Event Analytics concepts to operational data. Current ITSI documentation continues to expose adaptive thresholding, notable events, aggregation policies, KPI calculations and predictive/cause-analysis functionality. [12] Splunk positions ITSI as an overlay that can bring signals from Cisco and other third-party monitoring systems together rather than requiring immediate replacement of every source tool. [13]
+Detection/correlation. Its strongest pattern is “telemetry already in Splunk → KPI/search → threshold/anomaly → notable event → aggregation/episode/service view.” That architecture is attractive when an organization already has large operational datasets and substantial SPL engineering. The flip side is that service models, searches, aggregation policies and dashboards can become a significant migration dependency. ITSI provides configuration backup/restore mechanisms that can be used when moving configurations between deployments or search-head environments. [14]
+Automation/extensibility. Splunk's platform APIs and integrations make ITSI highly extensible, while more sophisticated security/operations playbooks have traditionally been delegated to adjacent orchestration tooling rather than making ITSI itself the sole automation engine. The practical custom strategy is therefore to treat ITSI as either the detection/correlation brain or the historical telemetry/search platform—not necessarily both.
+Hosting/licensing. ITSI is proprietary and normally purchased on top of the broader Splunk platform. Splunk can therefore fit both cloud-led and customer-operated Splunk architectures, with the exact deployment model dependent on whether Splunk Cloud or Splunk Enterprise is the underlying data plane. [15]
+Migration posture: comparatively favorable for partial replacement. Keep Splunk as searchable telemetry storage while a custom event/correlation service consumes selected results; alternatively, move collection to OpenTelemetry and gradually reduce which signals are indexed in Splunk. The largest cost/risk driver is not the API—it is reproducing years of SPL, KPI, service-model and dashboard semantics.
+Dynatrace
+Dynatrace has one of the most vertically integrated observability architectures in the group. OneAgent discovers processes and collects application, service, infrastructure and database signals; OpenTelemetry can also be ingested. OpenPipeline processes incoming data, while Grail is the vendor's observability-oriented lakehouse for metrics, logs, traces and events. [16] Dynatrace also standardizes fields across logs, events, spans, metrics and entities through its Semantic Dictionary, which is important when building automations on top of telemetry. [17]
+Its detection/correlation layer is unusually tightly coupled to automatically discovered runtime topology. Dynatrace problems are created by its intelligence layer by correlating anomalies and root causes; individual Davis events represent more granular anomaly detections. Workflow triggers can fire on either the aggregated problem or individual Davis events, and the platform applies deduplication semantics to those triggers. [18]
+Automation is also native: workflows can be on-demand, event-driven or scheduled, and actions include JavaScript, DQL, HTTP requests, approvals, nested workflows and Hub-provided connectors. A live workflow can also be invoked through API. [19] Configuration can be manipulated through the Settings API, while Grail exposes data APIs. [20]
+The primary lock-in risk is therefore semantic rather than transport-level. Instrumentation can be made portable through OpenTelemetry, but reproducing the combination of automatic discovery, dependency graph, anomaly semantics, problem formation and RCA is much harder. [21] Dynatrace's strategic offering is SaaS-oriented; current vendor material also discusses migration from Managed toward SaaS. [22]
+Custom-replacement assessment: excellent source of telemetry during a hybrid migration; easy to surround with custom workflows through APIs; significantly harder to duplicate its topology-aware analytics than its basic alert generation.
+Moogsoft / Dell APEX AIOps Incident Management
+Moogsoft needs to be treated differently from the other names on the list because its corporate/product status has changed. Dell announced its intention to acquire Moogsoft in July 2023 as part of an AIOps strategy, and Dell's current legal/service documentation says that Moogsoft Cloud Service is now Dell APEX AIOps Management Incident. [23] Dell also lists APEX AIOps Incident Management as a current service alongside related observability offerings. [24]
+Historically, Moogsoft's technical differentiation was cross-tool event ingestion, clustering/correlation, deduplication and incident formation—the same architectural niche now occupied prominently by BigPanda. For an existing customer, the important 2026 question is less “should we reproduce the old Moogsoft algorithm?” and more “which normalization rules, topology mappings, correlation policies and downstream integrations must survive the Dell product transition?”
+Because of the portfolio transition, do not create new strategic dependencies on historical Moogsoft-specific interfaces without validating them against the current Dell service contract and API documentation. A migration program should first externalize the normalized event schema and downstream incident interface, then shadow the current correlation results before moving correlation itself.
+Custom-replacement assessment: normalization and rule/window-based clustering are practical to reproduce; mature unsupervised/ML correlation and years of tuned mappings are not trivial. Product-transition risk strengthens the case for putting a vendor-neutral event bus/schema around the service.
+PagerDuty
+PagerDuty should not be evaluated as a ServiceNow-like telemetry/CMDB platform. Its core strength is the last mile from operational event to the right responder and automation. Event Orchestration supports global, routing and service-level orchestrations; events arriving through Events API v2 can be filtered, enriched, suppressed, routed or used to trigger different behaviors based on event fields and rule conditions. [25]
+PagerDuty exposes especially useful partial-replacement boundaries. Service orchestration can alter trigger/resolve behavior, routing can be dynamic, threshold conditions can control behavior, and automation actions or webhooks can run before notifying a human. PagerDuty's documentation gives examples such as restarting a server, clearing logs or reverting a deployment via webhook-driven automation. Automation can also connect to PagerDuty Automation Actions / Runbook Automation, including self-hosted execution patterns. [25]
+The consequence is that PagerDuty is one of the easiest products to retain during an AIOps rebuild. A custom detector/correlator can simply emit high-quality incidents into PagerDuty while PagerDuty continues to provide schedules, escalation, responder engagement and delivery. Building routing logic yourself is moderate work; replacing the operationally critical delivery platform—including schedule semantics, escalation, push, telephony/SMS, user/contact preferences, failover and mobile experience—is a very different project.
+Hosting/licensing: commercial SaaS, with some runbook execution capability deployable into the customer's environment. Some Event Orchestration capabilities are package-dependent; for example, PagerDuty documents Global Orchestrations as an AIOps/add-on capability while basic integration/service orchestration is more broadly available. [25]
+Custom-replacement assessment: retain as a delivery endpoint while custom-building everything upstream unless paging itself is a strategic competency.
+BigPanda
+BigPanda is arguably the clearest commercial reference implementation for the component most organizations contemplate custom-building: the cross-tool event normalization and correlation layer.
+Its Alert Intelligence stage ingests monitoring data through standard integrations, an agent, email, Open Integration Manager and APIs. It then normalizes vendor-specific payloads into tags, filters/suppresses irrelevant events, deduplicates them and aggregates lifecycle updates. Primary and secondary properties are core normalization/deduplication identifiers; exact duplicates can be discarded while new state updates can be merged into an existing alert. [26]
+Incident Intelligence then correlates alerts using pattern recognition and contextual tags. BigPanda documents correlation patterns defined by source system, tags, time window and optional filters; it can also bring in topology, CMDB and change data, and supports probable-root-cause/context enrichment. [27] Topology sources can arrive through APIs or standard integrations and influence correlation, impact assessment and routing. [28]
+This is important for build-vs-buy analysis because a significant portion of the apparent “AI” is architecturally reproducible with well-designed normalization, enrichment, incident fingerprints, temporal windows and topology. BigPanda itself exposes correlation patterns and customization controls rather than presenting correlation purely as an opaque model. [29] The difficult part is operating those policies across hundreds of sources, coping with schema inconsistency, preserving incident lifecycle state and continuously tuning precision/recall.
+BigPanda's product is a commercial centralized platform, with agents/integration managers providing reach into monitored environments. Its documentation exposes APIs and custom integration paths alongside more than 50 standard monitoring integrations. [26]
+Custom-replacement assessment: one of the most plausible commercial products to replace partially. Begin by owning normalization/enrichment, then shadow dedup, then shadow correlation. Do not attempt a single “rewrite BigPanda” cutover.
+IBM Instana
+IBM Instana is fundamentally a real-time observability/APM platform rather than an ITSM system. It provides broad technology integrations and automatically instrumented application/infrastructure monitoring; IBM advertises support for more than 300 technologies/integrations. [30] Its extensibility also includes a substantial public code ecosystem in the Instana GitHub organization. [31]
+Instana deserves particular attention in regulated or sovereignty-sensitive environments because IBM explicitly offers both SaaS and self-hosted backends. Self-hosted Instana includes the server and data stores, can run on Kubernetes or Red Hat OpenShift, and can operate in air-gapped environments. IBM documents Standard and Custom self-hosted editions in addition to SaaS. [32]
+Current self-hosted documentation also exposes optional capabilities including Action & Automation, AI action generation, incident summarization and infrastructure Smart Alerts on supported editions, demonstrating that IBM is extending Instana beyond pure telemetry visualization toward automated operations. [33] The deployment documentation describes one-second telemetry, automated discovery/dependency mapping and automated anomaly diagnostics as core observability characteristics. [34]
+Migration posture: strong. An organization can keep Instana as the APM/discovery sensor while externalizing event correlation and ITSM. The self-hosted option also means the data-retention and sovereignty trade-off differs substantially from SaaS-only vendors. Open standards/OpenTelemetry support further reduces instrumentation lock-in. [34]
+Custom-replacement assessment: do not rush to reproduce low-level automatic application discovery. It is much more reasonable to consume Instana's telemetry/alerts and own downstream event correlation, enrichment, ticketing and remediation.
+Elastic Observability
+Elastic is the strongest “construction kit” among the commercial platforms in this comparison. Elasticsearch supplies a programmable search/indexing data layer, and ingest pipelines apply sequential processors to filter, transform and enrich documents before indexing; Elastic currently documents more than 40 configurable ingest processors. [35] Agents and integrations can feed cloud logs, metrics and other telemetry into the stack; for example, Elastic's Azure integrations can use Elastic Agent and support both hosted Elastic Cloud and self-managed Elasticsearch/Kibana deployments. [36]
+Kibana's alerting framework can detect threshold conditions and unusual time-series behavior and execute notification/action logic. [37] The ecosystem provides numerous integrations and prebuilt dashboards, while ingestion pipelines and Elasticsearch APIs make arbitrary normalization/enrichment comparatively easy. [38]
+The principal distinction from BigPanda is that Elastic gives you more primitives but less opinionated AIOps incident semantics. Implementing fingerprints, alert lifecycle, cross-source incident grouping, topology joins and feedback-driven correlation is feasible, but much of that engineering becomes yours. That makes Elastic particularly attractive when the organization already operates Elasticsearch competently or when avoiding a proprietary correlation engine is a strategic objective.
+Hosting/licensing: Elastic Cloud provides hosted operation and the stack can also be self-managed; subscription level controls availability of some advanced capabilities. [36]
+Custom-replacement assessment: excellent substrate for detection, event storage, historical investigation and custom correlation; much less attractive as an out-of-the-box replacement for ServiceNow CMDB/ITSM.
+Datadog
+Datadog's center of gravity is a commercial SaaS observability data plane spanning infrastructure, applications, logs, traces and related operational context. Its integration catalog now advertises more than 1,000 built-in integrations, illustrating the scale of its collector/ecosystem advantage. [39]
+Detection is exposed through Monitors, while Watchdog provides automated anomaly/root-cause-oriented intelligence; the platform also exposes Event Management, Incident Management, Workflow Automation, a Software Catalog and context-graph capabilities in the current product portfolio. [40] These capabilities make Datadog broader than a traditional monitoring tool, but it is still not equivalent to an enterprise CMDB/ITSM suite.
+APIs, webhooks and integrations make it straightforward to use Datadog only for sensing/detection while another platform owns incident records or remediation. Conversely, Workflow Automation can make Datadog the trigger point for operational actions. [41]
+Migration posture: use OpenTelemetry where possible before migration, preserve an independent service/ownership schema, and avoid embedding business-critical routing exclusively in monitor-specific configuration. The biggest commercial cost drivers tend to be telemetry volume, retention and breadth of enabled product families rather than incident count alone.
+Custom-replacement assessment: basic monitors, event enrichment and workflows are reproducible; the collection/integration estate and unified SaaS experience represent the larger replacement burden.
+New Relic
+New Relic follows a similar architecture to Datadog but with NRDB as a particularly visible central data abstraction. New Relic says NRDB ingests billions of telemetry points per minute across more than 180,000 accounts. [42] Its current platform emphasizes a unified data layer accepting open standards such as OpenTelemetry, Prometheus, StatsD and eBPF-derived signals. [43]
+Current New Relic positioning includes predictive alerting, automatic root-cause analysis, telemetry/context integration, runbooks, service catalogs and incident context; it advertises more than 800 prebuilt integrations. [43] New Relic's developer surface also includes telemetry ingest APIs and its GraphQL-based NerdGraph control/API layer, making it possible to externalize alert handling and configuration even when NRDB remains the observation store.
+The key migration advantage is open ingestion: OpenTelemetry can become the stable instrumentation boundary while New Relic remains one of potentially several exporters. The harder migration artifact is not instrumentation but NRQL-based dashboards, alert conditions and organizational knowledge encoded in the platform.
+Hosting/licensing: proprietary SaaS. It should therefore be evaluated differently from Elastic or self-hosted Instana where backend custody is a hard requirement.
+Custom-replacement assessment: relatively high feasibility for rules, routing and automation; lower economic justification for rebuilding a large, globally scaled telemetry query/store unless data sovereignty or usage economics make that strategically necessary.
+Opsgenie
+Technically, Opsgenie has long provided alert ingestion, on-call schedules, escalation and incident-response automation, with REST APIs, client libraries and integration tooling. Its incident features can automate stakeholder messages, status-page updates and conferencing-related workflows. [44]
+Strategically, however, its status dominates the analysis: Atlassian stopped new Opsgenie sales on June 4, 2025, is moving capabilities into Jira Service Management, and states that Opsgenie support/access ends April 5, 2027. [5]
+Accordingly, no organization should spend significant 2026 engineering budget recreating new Opsgenie-specific integrations unless those integrations directly accelerate exit. Export schedules, escalation rules, teams, heartbeats/integration mappings and incident-routing behavior; then map them either to Jira Service Management, PagerDuty, or a custom routing layer backed by another last-mile delivery provider.
+Custom-replacement assessment: routing rules are feasible; replicating global paging delivery remains unattractive. The migration deadline makes abstraction urgent.
+BMC Helix
+BMC Helix is the closest broad competitor to ServiceNow in this set because its portfolio includes ITOM/observability, event management, ITSM, automation and long-standing configuration/discovery capabilities rather than just APM.
+BMC Helix Operations Management runs on BMC Helix Portal and is documented in both SaaS and containerized on-premises forms. It includes monitoring/event-management workflows and integrates with incident-management systems and other monitoring tools. [45] Its integration documentation includes both cloud and on-premises monitoring products. [46]
+BMC Helix Intelligent Automation acts as an automation “manager of managers”: policies can trigger remediation through third-party automation systems, connect Operations Management to ITSM, create/change incidents, or execute tooling such as Ansible job templates. [47] This is architecturally important because it validates a pattern recommended throughout this report: do not necessarily embed the executor in the AIOps engine—use AIOps for policy/context and delegate action to a specialized automation platform.
+Hosting/licensing: proprietary commercial software with both SaaS and on-prem/containerized deployment options documented for relevant Helix products. [48]
+Migration posture: BMC is a plausible whole-suite ServiceNow alternative, but it can equally be used as a retained ITSM/CMDB layer while custom telemetry/correlation services are introduced around it. Full platform-to-platform migrations remain costly because process definitions and data models—not REST connectivity—are the dominant work.
+Open-source and custom-build building blocks
+The open-source ecosystem is strongest in telemetry, alert evaluation and automation, considerably weaker as a drop-in enterprise CMDB/ITSM replacement.
+OpenTelemetry should be the default instrumentation/collection abstraction in a new hybrid architecture. It is explicitly vendor- and tool-agnostic, defines APIs/SDKs and semantic conventions, and provides the Collector for receiving, processing and exporting traces, metrics and logs. It deliberately does not provide the observability storage/backend itself. [49] Collector pipelines are composed from receivers, processors, exporters and connectors; processors can transform, filter and enrich telemetry. [50] That makes OTel particularly valuable for dual-write migrations.
+Prometheus plus Alertmanager is a mature foundation for rule-based metrics detection and notification handling. Prometheus alert rules evaluate PromQL expressions, while Alertmanager handles grouping, deduplication, routing, silencing and inhibition and supports HA clustering. [51] Alertmanager can route to commercial incident systems or arbitrary webhook receivers, which makes it useful as a transitional layer rather than requiring it to become the final incident system. [52]
+Grafana Alerting provides a common alerting interface over incoming metrics and logs and can work with Alertmanager implementations. Its rules consist of data queries/expressions, trigger conditions and evaluation periods. [53] This is useful when the organization wants a UI/control layer over otherwise fragmented Prometheus-style rules.
+OpenSearch adds searchable event/log storage, scheduled monitors, triggers and actions. Its Alerting plugin runs queries against indexes and executes actions when trigger conditions are met; anomaly-detection capabilities can be coupled to that alerting path. [54] It is therefore a reasonable self-operated substrate for an event-intelligence service when Elasticsearch licensing/commercial capabilities are not desired.
+StackStorm is well suited to the remediation/runbook tier. Its pack model includes actions, workflows, rules, sensors and policies, supports public APIs and custom packs, records execution history and audit information, and has a documented horizontally scalable/HA deployment architecture. [55] Git revisions can even be selected for action content, an attractive property when operational automation must be version-controlled. [56]
+Ansible/AWX, Kubernetes controllers/operators, cloud-native workflow engines and organization-specific services can occupy the same executor tier. The recommendation is not to write another general-purpose workflow runtime unless there is a very unusual requirement. Write domain-specific policy and adapters; reuse a battle-tested execution engine.
+A useful boundary looks like this:
+OpenTelemetry's receiver/processor/exporter model, Alertmanager's grouping/routing model and StackStorm's rules/actions/workflows collectively provide most of the infrastructure needed for this architecture without requiring a proprietary monolith. [57]
+The missing hard layer is shared operational identity: what constitutes the same host, application, Kubernetes workload, database, service, cloud resource and business service across all sources. BigPanda's design is instructive here: it normalizes inputs into tags and uses primary/secondary properties, enrichment, topology and correlation patterns rather than trying to solve every problem directly with a large language or deep-learning model. [58]
+Academic techniques can then be introduced selectively. DeepLog demonstrated learning normal log sequences with a neural model and flagging deviations, while CausalRCA demonstrates causal-graph-based root-cause localization for microservices. [3] The important engineering inference is that ML should sit on top of a stable event/identity pipeline, not compensate for the absence of one.
+Build-versus-buy feasibility, risk, and economics
+The following effort ranges are engineering estimates from this analysis for a large enterprise environment, assuming reuse of existing open-source infrastructure, a capable platform/SRE team and an incumbent ITSM system that remains available during migration. They are not vendor quotations.
+What is genuinely easy
+Collection and normalization are now unusually buildable because OTel provides a common instrumentation and pipeline abstraction, while products such as Elastic expose generic transformation processors. [59] The custom code should primarily be adapters, semantic mapping and schema governance—not another agent installed on every host.
+Deterministic deduplication is also straightforward in principle. BigPanda's documented model provides a useful mental reference: calculate stable identifying properties, drop exact duplicates, merge state updates and preserve the timeline of an alert. [26] A custom implementation can use a keyed state store with a fingerprint such as:
+fingerprint = hash(source_family, entity_id, signal_type, normalized_condition)
+The complexity arises in deciding when two superficially different alerts really represent the same condition, not in computing the hash.
+Basic correlation is similarly feasible. BigPanda's source/tags/time-window/filter model illustrates that strong first-stage correlation does not require a frontier ML system. [29] The sensible sequence is deterministic grouping first, graph/topology correlation second, ML ranking third.
+What becomes difficult at enterprise scale
+Advanced correlation/RCA becomes difficult because dependency structure changes continually. Dynatrace's advantage is that its anomaly/problem logic can operate against automatically discovered entities and runtime dependencies rather than relying on static hand-maintained service relationships. [60] BigPanda likewise brings topology feeds into its correlation and impact-assessment process. [28] A custom causal model trained against a stale topology graph can be mathematically sophisticated and operationally wrong.
+CMDB reconciliation has a similar asymmetry. Building tables and a graph API is easy; building a trusted CI system that merges discovery, cloud APIs, asset databases, ownership, changes and manual corrections under well-defined precedence is not. ServiceNow explicitly emphasizes automated CMDB population and reconciliation because these governance mechanics are fundamental to the product. [10]
+On-call delivery is another misleadingly simple-looking problem. Rules and schedules can certainly be coded. But PagerDuty's value is the whole service around those rules: integrations, event orchestration, escalation, notifications and responder workflows. [25] A company should custom-build this only if owning incident communications infrastructure is itself strategically important.
+Primary cost drivers
+The dominant cost drivers in a custom/hybrid AIOps program are not primarily model-training compute.
+Telemetry economics come first: event/metric/log volume, cardinality, retention period, replicas, indexing/query patterns and egress. The economics simply shift location when moving from a SaaS observability vendor to Elasticsearch/OpenSearch/Kafka/object storage; they do not disappear. New Relic's own description of NRDB ingesting billions of points per minute illustrates the scale at which commercial data planes are engineered. [42]
+Integration engineering is next. Commercial vendors' hundreds or thousands of integrations have accumulated years of edge-case handling: Datadog advertises more than 1,000 integrations, New Relic more than 800, IBM Instana more than 300, and BigPanda more than 50 standard monitoring integrations in its narrower AIOps domain. [61] OpenTelemetry mitigates this cost for modern telemetry but does not standardize every legacy event or ITSM payload.
+Operational safety for automation is another large hidden cost. The workflow itself may contain only five actions; the production system needs idempotency, retries, locks, concurrency controls, credentials, policy, approvals, audit trails, blast-radius controls and rollback. StackStorm's explicit policy and execution-history features illustrate the operational controls that a serious automation platform requires. [62] Dynatrace's inclusion of approval actions in workflows makes the same point from the commercial side. [63]
+Finally, dual-run duration matters. A migration that saves license cost after twelve months but requires two full platforms for eighteen months can have a materially different business case from a “license comparison” spreadsheet.
+Comparative decision matrix
+The scores below are an analytical synthesis of the capabilities documented above, not vendor benchmark results. H means the platform is a major strength in that category; M means meaningful capability but not a full category-leading system; L means the capability is peripheral or normally supplied elsewhere; — means it should not be considered part of the strategic offering.
+*ServiceNow commonly reaches customer networks with MID Server/collectors rather than moving the whole Now Platform backend into a customer data center. [72]
+A second comparison focused specifically on custom substitution is more revealing:
+The principal architectural takeaway is that ServiceNow and BMC Helix are systems of record; Dynatrace/Datadog/New Relic/Instana/Splunk/Elastic are principally systems of observation; BigPanda/Moogsoft are systems of event intelligence; PagerDuty/Opsgenie are systems of engagement. Trying to force any one of the latter three groups to replace the first group inevitably causes custom development around workflow, CMDB and governance.
+Hybrid reference architecture
+A low-risk architecture should establish stable contracts between those categories rather than asking every monitoring system to create incidents directly.
+This pattern directly exploits the APIs and extension points vendors already expose: ServiceNow REST/SOAP/webhooks and IntegrationHub, PagerDuty Events API/orchestration/webhooks, Dynatrace event-triggered/API-triggered workflows, BigPanda API/custom integration paths, and open collection through OpenTelemetry. [73]
+The most important custom artifact in that design is the canonical event contract. It should contain at minimum:
+event_id, source, source_event_id, observed_at, received_at, entity_id, entity_type, service, environment, signal_type, condition, severity, status, fingerprint, owner, location, topology_refs, change_refs, runbook_refs, raw_payload_ref, and versioned schema metadata.
+That data model should remain deliberately independent of ServiceNow alert IDs, PagerDuty dedup keys, Dynatrace entity identifiers or BigPanda tags. Vendor-specific identifiers belong in namespaced attributes so that an incident can move between backends without becoming a lossy migration.
+For correlation, use a layered algorithm rather than immediately chasing “AI”:
+This progression mirrors proven commercial architectures more closely than an end-to-end black-box model: BigPanda normalizes/deduplicates before correlation; Dynatrace creates granular anomaly events before producing correlated problems; PagerDuty applies routing/orchestration after receiving events. [74]
+A feedback path from the final incident disposition is essential. Closure classifications such as “duplicate,” “no action,” “change-caused,” “auto-remediation succeeded,” “false positive,” “real incident,” and identified root CI should be fed back to correlation-model evaluation. Without this, an AIOps project can optimize alert-count reduction while silently merging unrelated incidents.
+Recommended phased roadmap
+A production migration should optimize for reversibility. No phase should require turning off the incumbent before the replacement has produced comparable outputs from the same inputs.
+Foundation and measurement
+Begin by inventorying every event source, alert type, route, automation and downstream integration. Measure baseline event rate, unique-alert rate, incidents/page, false-positive/page rate, mean acknowledgment time, mean resolution time, auto-resolution ratio, duplicate tickets and number of manual touches per incident.
+Deploy OpenTelemetry where it is technically appropriate and introduce a canonical event envelope around non-OTel alerts. OTel is specifically designed to receive/process/export telemetry to multiple backends, making it suitable for this dual-running stage. [75]
+Do not begin by migrating CMDB. Consume the existing ServiceNow or BMC CI/service ownership model read-only. ServiceNow explicitly documents that observability/Event Management can operate before the CMDB reaches full maturity, underscoring that signal processing does not require a CMDB rewrite as a prerequisite. [72]
+Externalize detection and normalization
+Move the least controversial logic first: static thresholds, dead-man checks, obvious log rules and normalization/enrichment.
+For every rule moved, run old and new detections concurrently and calculate:
+event recall against incumbent detections;
+additional detections;
+time-to-detect difference;
+false-positive rate after human disposition.
+Prometheus-style expression rules, Elastic/OpenSearch query-based alerting and custom streaming detectors are all technically sufficient for this tier. [76]
+Shadow deduplication and correlation
+Next introduce deterministic alert fingerprints and incident grouping. Keep vendor correlation authoritative, but write both the vendor incident ID and custom candidate incident ID into an evaluation store.
+Start with explicit attributes—service, host/cluster, alert class and time window—before topology or ML. That approach is consistent with BigPanda's documented source/tag/time/filter correlation model. [29]
+Evaluate under-correlation and over-correlation separately. A system that groups too little produces noise; one that groups unrelated failures can hide simultaneous incidents and is operationally more dangerous.
+Externalize runbooks
+Move remediation into Git-controlled automation before replacing the vendor's decision logic. This gives both old and new correlation engines the same execution target.
+Use strict tiers:
+Observe-only runbooks collect diagnostics.
+Human-approved runbooks propose and stage actions.
+Auto-remediation is permitted only for bounded, reversible operations with tested rollback.
+Existing engines already provide the mechanics required for this. StackStorm, for example, supports rules, actions, workflows, policies, APIs and historical audit, while Dynatrace workflows demonstrate the commercial equivalent with HTTP, JavaScript, approval and nested workflow actions. [77]
+Selective production cutover
+Only after shadow measurements are acceptable should selected service domains begin using the custom correlation result as the authoritative incident trigger.
+At this point, retain the mature endpoint:
+ServiceNow/BMC for ticket lifecycle, audit, change and CMDB;
+PagerDuty or Jira Service Management for on-call engagement;
+existing observability tools for deep diagnostics where replacement has not justified itself.
+PagerDuty's Events API/orchestration model is particularly well suited to this architecture because upstream intelligence can evolve without changing the responder-delivery layer. [25]
+CMDB and topology modernization
+Treat this as a separate workstream after the signal plane is stable.
+Rather than first building “another CMDB,” build a service graph containing only attributes needed for operations: canonical service ID, ownership, environment, deployable, runtime entities, upstream/downstream dependencies, business criticality and source-of-truth provenance.
+Reconcile that graph against ServiceNow/BMC and runtime observability. Only pursue full CMDB replacement if there is a separate business case covering asset lifecycle, compliance, financial ownership, discovery and non-observability use cases. ServiceNow's focus on automated CMDB population/reconciliation and Dynatrace's automatic process/entity discovery demonstrate that these two products are solving different but complementary forms of topology. [78]
+Advanced ML and RCA
+ML should be one of the last—not first—replacement phases.
+DeepLog establishes that learned log-sequence anomaly detection can be built independently, and modern causal-RCA research shows meaningful results from learned causal graphs. [3] Production authority should nevertheless be granted only after models are evaluated against historical incidents and live shadow outcomes.
+A practical objective is not “the AI found the one true root cause.” It is:
+Rank the three most plausible causal entities or changes, with evidence, sufficiently well that the responder investigates fewer branches.
+That definition allows deterministic topology, recent changes, statistical anomaly strength and learned features to contribute together rather than making incident response dependent on one opaque model.
+Indicative implementation timeline
+The following assumes a program beginning after the current date, with the incumbent platform remaining operational throughout. The sequence is more important than the exact duration.
+The gating criteria should be outcome-based rather than calendar-based. A representative production gate is: the custom detector/correlator has run in shadow mode through multiple real incidents; recall on actionable incidents is no worse than the incumbent within an agreed tolerance; dangerous over-correlation is below an explicitly measured threshold; all automated actions are idempotent or protected by locks; and incident creation can revert to the incumbent path without data loss.
+For organizations starting from ServiceNow, the recommended end state is usually not “zero ServiceNow.” It is a thinner ServiceNow footprint in which vendor-neutral telemetry, external detection/correlation and Git-managed automation feed a smaller set of enriched incidents into ServiceNow ITSM/CMDB. ServiceNow remains valuable where its integration, CMDB, workflow and governance capabilities are hardest to justify recreating. [79]
+For organizations with Splunk already deeply deployed, keeping Splunk as the operational search/data plane while moving correlation to a custom service can avoid a simultaneous telemetry migration. ITSI itself is designed to operate across multiple existing monitoring sources, making a staged separation more practical than a full rip-and-replace. [80]
+For Dynatrace, Datadog, New Relic or Instana estates, standardize instrumentation with OpenTelemetry before moving higher layers. OTel deliberately separates telemetry generation/collection from the backend, and Dynatrace and New Relic explicitly accept OTel/open-standard telemetry; IBM likewise positions Instana around OpenTelemetry compatibility. [81] This preserves the expensive application-instrumentation work even if the analytical backend changes.
+For BigPanda or Moogsoft/Dell estates, prioritize ownership of the canonical event schema, normalized entity identity and correlation evaluation dataset. BigPanda's published architecture makes clear that normalization and enrichment are prerequisites for effective correlation; owning those layers materially lowers future switching cost. [58] Existing Moogsoft customers have the additional reason of the Dell product transition to avoid making the historical product schema the enterprise contract. [67]
+For PagerDuty, the recommendation is nearly the opposite: retain it late into the program. Its APIs and orchestration create a clean boundary between custom intelligence and human engagement, so replacing it generates relatively little AIOps differentiation for substantial operational risk. [25]
+For Opsgenie, accelerate migration now. As of October 4, 2026, the announced April 5, 2027 end-of-support/access date is about six months away; new engineering should therefore target abstraction/export and the successor platform, not deepen product coupling. [70]
+For BMC Helix, use essentially the same decomposition recommended for ServiceNow: preserve ITSM/CMDB where it adds process value while making detection, correlation and remediation independently replaceable. BMC's own Intelligent Automation architecture—using policies to invoke third-party automation such as Ansible—demonstrates that this separation is compatible with the vendor's product direction. [82]
+The overall engineering principle is therefore replace proprietary decision points before replacing trusted systems of record. Normalize once, create portable identities, measure detection independently, externalize automation, then decide—component by component—whether a commercial platform is still earning its operational and licensing cost. The current ecosystem provides enough open telemetry, storage, alerting and orchestration primitives to make that strategy technically realistic; the remaining vendor moat is concentrated in enterprise-scale topology/reconciliation, mature correlation, integration breadth, workflow governance and reliable human engagement rather than in the basic act of emitting an alert. [83]
+[1] [7] Event Management
+https://www.servicenow.com/docs/r/it-operations-management/event-management/c_EM.html
+[2] [83] Documentation - OpenTelemetry
+https://opentelemetry.io/docs/
+[3] DeepLog: Anomaly Detection and Diagnosis from System ...
+https://dl.acm.org/doi/10.1145/3133956.3134015
+[4] [11] [72] Learn the basics
+https://www.servicenow.com/docs/r/it-operations-management/event-management/learn-the-basics.html?contentId=MQQMwYCt2MrRGI~ZTeKNMA
+[5] [70] Opsgenie Pricing | Explore Migration Options
+https://www.atlassian.com/software/opsgenie/pricing
+[6] [23] Dell Technologies Announces Intent to Acquire Moogsoft | Dell USA
+https://www.dell.com/en-us/dt/corporate/newsroom/announcements/detailpage.press-releases~usa~2023~07~dell-technologies-announces-intent-to-acquire-moogsoft.htm
+[8] [64] Explore
+https://www.servicenow.com/docs/r/it-operations-management/exploring-itom-aiops.html
+[9] [73] [79] What is ServiceNow?
+https://www.servicenow.com/what-is-servicenow.html
+[10] [78] What is a configuration management database (CMDB)?
+https://www.servicenow.com/products/it-operations-management/what-is-cmdb.html
+[12] [14] [65] Fixed issues in Splunk IT Service Intelligence - Splunk Documentation
+https://docs.splunk.com/Documentation/ITSI/4.20.0/ReleaseNotes/Fixedissues
+[13] [15] [80] Splunk IT Service Intelligence
+https://www.splunk.com/en_us/products/it-service-intelligence.html
+[16] [60] Dynatrace OneAgent
+https://docs.dynatrace.com/docs/ingest-from/dynatrace-oneagent
+[17] Semantic Dictionary
+https://docs.dynatrace.com/docs/semantic-dictionary
+[18] [21] Event triggers for workflows — Dynatrace Docs
+https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/build/trigger/event-trigger
+[19] Workflow triggers — Dynatrace Docs
+https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/build/trigger
+[20] Settings app — Dynatrace Docs
+https://docs.dynatrace.com/docs/manage/settings
+[22] Dynatrace observability platform
+https://www.dynatrace.com/platform/
+[24] Dell APEX AIOps | Dell USA
+https://www.dell.com/en-us/legal/lp/apex-ai-ops
+[25] Event Orchestration
+https://support.pagerduty.com/main/docs/event-orchestration
+[26] [58] [74] Alert Intelligence
+https://docs.bigpanda.io/en/alert-intelligence
+[27] [28] [29] Incident Intelligence
+https://docs.bigpanda.io/en/incident-intelligence
+[30] IBM Instana Observability
+https://www.ibm.com/products/instana
+[31] Instana
+https://github.com/instana
+[32] [33] Installing and configuring self-hosted Instana backend
+https://www.ibm.com/docs/en/instana-observability?topic=installing-configuring-self-hosted-instana-backend
+[34] IBM Instana Observability Deployment Options
+https://www.ibm.com/products/instana/deployment-options
+[35] [68] Ingest processor reference | Elasticsearch Reference
+https://www.elastic.co/docs/reference/ingest-processor
+[36] Custom Azure Logs | Elastic integrations
+https://www.elastic.co/docs/reference/integrations/azure_logs
+[37] Alerting | Elastic Docs
+https://www.elastic.co/docs/explore-analyze/alerting
+[38] Elasticsearch Integrations
+https://www.elastic.co/integrations
+[39] [61] Datadog Integrations: 1000+ Observability Tools
+https://www.datadoghq.com/product/platform/integrations/
+[40] [41] Monitors
+https://docs.datadoghq.com/monitors/
+[42] [69] The New Relic database (NRDB): the horsepower under ...
+https://docs.newrelic.com/docs/data-apis/get-started/nrdb-horsepower-under-hood/
+[43] New Relic Observability Platform | New Relic
+https://newrelic.com/platform
+[44] Opsgenie Docs
+https://docs.opsgenie.com/
+[45] [48] [71] BMC Helix Operations Management overview
+https://docs.helixops.ai/bin/IT-Operations-Management/Operations-Management/BMC-Helix-Operations-Management/bhom234/Getting-started/BMC-Helix-Operations-Management-overview/
+[46] BMC Helix Operations Management service
+https://docs.helixops.ai/bin/Helix-Common-Services/Other/BMC-Helix-Subscriber-Information/helixsubscriber/BMC-Helix-services/BMC-Helix-Operations-Management-service/
+[47] [82] Integrating with BMC Helix ITSM by using ...
+https://docs.helixops.ai/bin/IT-Operations-Management/Operations-Management/BMC-Helix-Operations-Management/bhom234/Integrating/Integrating-with-BMC-Helix-ITSM-by-using-BMC-Helix-Intelligent-Automation/
+[49] [81] What is OpenTelemetry?
+https://opentelemetry.io/docs/what-is-opentelemetry/
+[50] [57] [59] [75] Configuration
+https://opentelemetry.io/docs/collector/configuration/
+[51] [76] Alerting rules
+https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/
+[52] Prometheus Alertmanager
+https://github.com/prometheus/alertmanager
+[53] Grafana Alerting | Grafana documentation
+https://grafana.com/docs/grafana/latest/alerting/
+[54] Alerting
+https://docs.opensearch.org/latest/observing-your-data/alerting/index/
+[55] [77] Create and Contribute a Pack
+https://docs.stackstorm.com/reference/packs.html
+[56] Using a Specific Version of Pack Content When Running ...
+https://docs.stackstorm.com/reference/content_version.html
+[62] Policies — StackStorm 3.9.0 documentation
+https://docs.stackstorm.com/reference/policies.html
+[63] Workflow actions — Dynatrace Docs
+https://docs.dynatrace.com/docs/analyze-explore-automate/workflows/default-workflow-actions
+[66] Grail — Dynatrace Docs
+https://docs.dynatrace.com/docs/platform/grail
+[67] Moogsoft Hosting Service | Dell USA
+https://www.dell.com/en-us/legal/lp/cloud-and-hosting-services
+
+[TABLE 0]
+Capability | Custom-build posture | Recommended approach
+Collection / normalization | Build/assemble now | OpenTelemetry Collector plus adapters and canonical schema
+Threshold/rule detection | Build/assemble now | Prometheus, Elastic/OpenSearch, or stream processor
+Basic anomaly detection | Build selectively | Statistical models or existing search/ML platform
+Deduplication / simple grouping | Build | Deterministic fingerprint + state/time-window service
+Cross-domain correlation | Hybrid | Start rules/topology; retain vendor correlation while shadow-testing
+Runbooks / remediation | Build around OSS/commercial executors | Git-managed workflows, StackStorm/Ansible/Rundeck-style execution
+Incident routing policy | Build around a paging provider | Own routing logic; retain PagerDuty/JSM/ServiceNow delivery initially
+Global paging/on-call delivery | Buy | PagerDuty or equivalent until there is an extraordinary reason to own telecom/mobile infrastructure
+Service catalog / lightweight topology | Buildable | Service ownership graph + discovery feeds
+Enterprise CMDB/reconciliation | Usually buy/retain | ServiceNow/BMC first; replace only with strong governance mandate
+Full ITSM | Usually buy/retain | Keep ServiceNow/BMC/JSM; replace incrementally, not as an AIOps side project
+Topology-aware RCA/causal ML | R&D / hybrid | Shadow against vendor output and incident postmortems before production authority
+
+
+[TABLE 1]
+
+
+
+[TABLE 2]
+Component | Feasibility | Credible MVP | Production maturity | Main difficulty
+Canonical event schema / normalization | Very high | 2–3 months | 4–8 months | Source diversity and schema ownership
+OTel collection / dual export | Very high | 1–3 months | 3–6 months | Coverage, cardinality, backpressure
+Threshold/rule detection | Very high | 1–2 months | 3–4 months | Rule lifecycle and ownership
+Statistical anomaly detection | High | 2–4 months | 6–12 months | Seasonality, drift, false positives
+Alert fingerprinting / dedup | High | 1–3 months | 4–6 months | Incident lifecycle semantics
+Tag/time-window correlation | High | 2–4 months | 6–9 months | Precision/recall tuning
+Topology-aware correlation | Medium | 4–8 months | 9–18+ months | Correct and current dependency graph
+ML/causal RCA | Medium-low | 6–9 months | 12–24+ months | Labels, interventions, drift, explainability
+Routing policy engine | High | 2–4 months | 4–8 months | Ownership and escalation data
+Full paging/on-call service | Low-value custom build | 6–12 months | 18–36+ months | Telecom/mobile/HA/support burden
+Runbook orchestration using existing engine | Very high | 2–4 months | 4–9 months | Safety, secrets, approvals and rollback
+Custom general-purpose workflow engine | Low-value custom build | 6–12 months | 18+ months | State, retries, idempotency, audit
+Lightweight service catalog | High | 2–4 months | 4–8 months | Ownership governance
+Enterprise CMDB + reconciliation | Low-medium | 6–12 months | 18–36+ months | Identity, precedence, history, discovery
+Full ITSM workflow suite | Low | 9–18 months | Multi-year | Process breadth, UI, SLA, RBAC, audit
+
+
+[TABLE 3]
+Platform | Detection / anomaly | Correlation / dedup | Automation / playbooks | CMDB / topology | Routing / on-call | Telemetry/data plane | Customer-operated backend | Best hybrid role
+ServiceNow [64] | H | H | H | H | M | M | L* | System of record, CMDB, workflow and final incident
+Splunk ITSI [65] | H | H | M | M | M | H | H with Splunk Enterprise | Search/data plane plus KPI/correlation
+Dynatrace [66] | H | H | H | H runtime topology | M | H | Legacy/transition-dependent | Full-stack sensor + RCA
+Moogsoft / Dell APEX AIOps [67] | M | H | M | M | M | M | L | Existing-estate correlation / migration
+PagerDuty [25] | L–M | M | H | L | H | L | L; execution can be local | Last-mile engagement and automation
+BigPanda [58] | M | H | M–H | M–H enrichment | M | M | L | Cross-tool normalization/correlation
+IBM Instana [32] | H | M–H | M–H | H runtime topology | M | H | H | APM/observability sensor, especially regulated estates
+Elastic Observability [68] | H | M | M | L–M | M | H | H | Best general-purpose custom AIOps substrate
+Datadog [41] | H | M–H | H | M | M | H | L | SaaS observability + workflows
+New Relic [69] | H | M–H | M–H | M | M | H | L | SaaS data/observability plane
+Opsgenie [70] | L | M | M | L | H historically | L | L | Exit/migration only before Apr. 5, 2027
+BMC Helix [71] | H | H | H | H | M–H | M–H | H | Broad ServiceNow alternative / retained ITSM-CMDB
+
+
+[TABLE 4]
+Capability | ServiceNow | Splunk ITSI | Dynatrace | BigPanda | PagerDuty | Elastic | Datadog / New Relic | BMC Helix | Replacement difficulty
+Telemetry collection | Replaceable | Replaceable | OTel can supplement OneAgent | Mostly upstream | Upstream | Easily customizable | OTel can supplement | Replaceable | Low–M
+Rules / thresholds | Replaceable | SPL/KPI dependencies | Replaceable but loses context | Usually upstream | Limited | Very buildable | Buildable | Replaceable | Low–M
+Deduplication | Replaceable | Episode logic dependency | Coupled to problem semantics | Core capability | Event semantics | Custom code needed | Platform-specific | Core capability | M
+Cross-tool correlation | Harder | Significant ITSI value | Significant Davis value | Primary moat | Not main role | Must engineer | Must engineer | Significant value | M–H
+Runtime topology | Discovery/Service Map | Service modeling | Primary strength | Consumes/enriches topology | Not core | Must build/import | Catalog/context graph | Discovery/CMDB | H
+Remediation/runbooks | Easy to externalize | Easy to externalize | APIs/workflows available | Easy to externalize | Strong target/executor | Easy | Easy | Manager-of-managers model | M
+Incident routing | Can externalize | Can externalize | Can externalize | Can externalize | Primary strength | Must integrate | Integrate | Can externalize | M
+CMDB reconciliation | Primary strength | Not main role | Not general CMDB | Consumes context | Not core | Must build | Not full CMDB | Primary strength | Very H
+Full ITSM | Primary strength | Not role | Not role | Not role | Incident response only | Not role | Not role | Primary strength | Very H
+
+
+[TABLE 5]
+
+
+
+[TABLE 6]
+
+
+
+[TABLE 7]
+

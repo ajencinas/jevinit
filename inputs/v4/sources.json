@@ -1,0 +1,9 @@
+[
+  {"id":"S1","name":"ServiceNow · ITOM agentic workflows","url":"https://www.servicenow.com/docs/r/it-operations-management/now-assist-for-it-operations-management/now-assist-itom-ai-agent-workflows.html","basis":"Vendor documentation: alert assignment, analysis, recurring patterns and verification. Search-index text retrieved; direct page retrieval failed."},
+  {"id":"S2","name":"Datadog · Building Bits AI SRE","url":"https://www.datadoghq.com/blog/building-bits-ai-sre/","basis":"Vendor engineering account of agent-based incident investigation."},
+  {"id":"S3","name":"AWS · DevOps Agent general availability","url":"https://aws.amazon.com/about-aws/whats-new/2026/03/aws-devops-agent-generally-available/","basis":"Vendor announcement, 31 March 2026: incident investigation using telemetry, code and deployment context."},
+  {"id":"S4","name":"Dynatrace · Multicloud SRE agents","url":"https://www.dynatrace.com/news/blog/orchestrate-multicloud-ai-agents-for-autonomous-incident-resolution/","basis":"Vendor description, 15 June 2026: orchestrating cloud agents, configurable routing and consolidated findings."},
+  {"id":"S5","name":"Resolve AI · AI SRE platform","url":"https://resolve.ai/","basis":"Vendor positioning: on-call, incident investigation and operational tasks. Performance marketing is not used as independent evidence."},
+  {"id":"S6","name":"TypeSafe · Jev introduction","url":"https://docs.typesafe.ai/introduction","basis":"Vendor documentation: state, typed questions and structured answers; narrow questions composed in software."},
+  {"id":"S7","name":"TypeSafe · API reference","url":"https://docs.typesafe.ai/api","basis":"Vendor documentation: Choice, Score and Noul question and answer formats."}
+]

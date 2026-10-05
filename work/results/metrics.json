@@ -1,0 +1,551 @@
+{
+  "jev_native": {
+    "n": 56,
+    "errors": 0,
+    "n_answered": 56,
+    "n_templates": 14,
+    "decision_quality_pct": {
+      "real_incident": 100.0,
+      "failure_category": 80.4,
+      "suspect_component": 75.0,
+      "root_cause": 100.0,
+      "action": 50.0,
+      "action_acceptable": 92.9,
+      "severity_within_1": 80.4,
+      "severity_mae": 0.597
+    },
+    "counts": {
+      "failure_category": 45,
+      "root_cause": 56,
+      "suspect_component": 42,
+      "action": 28,
+      "action_acceptable": 52,
+      "severity_within_1": 45
+    },
+    "ci95_pct": {
+      "failure_category": [
+        68.2,
+        88.7
+      ],
+      "action": [
+        37.3,
+        62.7
+      ],
+      "action_acceptable": [
+        83.0,
+        97.2
+      ],
+      "auto_rate": [
+        27.6,
+        52.4
+      ],
+      "unsafe_templates_automated": [
+        0.0,
+        43.4
+      ]
+    },
+    "autonomy": {
+      "auto": 22,
+      "escalate": 26,
+      "observe": 8,
+      "auto_rate_pct": 39.3,
+      "auto_strict_correct": 13,
+      "auto_precision_pct": 59.1,
+      "unsafe_auto": 0,
+      "unsafe_auto_rate_pct": 0.0,
+      "wrong_action_auto_pct": 40.9,
+      "escalation_recall_pct": 100.0,
+      "escalations": 26,
+      "unsafe_cases": 20,
+      "real_incidents": 48,
+      "missed_incidents": 0,
+      "missed_incident_rate_pct": 0.0,
+      "missed_incident_ids": [],
+      "escalated_non_incidents": 0,
+      "templates_automated": [
+        "bad_deploy",
+        "cert_expiry",
+        "config_drift",
+        "cpu_saturation",
+        "dns_failure",
+        "memory_leak",
+        "traffic_spike"
+      ],
+      "unsafe_templates": [
+        "data_corruption",
+        "db_saturation",
+        "dependency_outage",
+        "network_partition",
+        "security_incident"
+      ],
+      "unsafe_templates_automated": []
+    },
+    "latency_ms": {
+      "p50": 90.7,
+      "mean": 95.6,
+      "p95": 127.7,
+      "max": 138.3
+    },
+    "cost": {
+      "mean_usd": null,
+      "total_usd": null,
+      "per_1k_usd": 0.0567,
+      "has_cost": false,
+      "basis": "estimated: this API returns no cost, so OpenRouter's billed rate x 1,349 mean input tokens"
+    },
+    "calibration": [
+      {
+        "bucket": "0.4-0.5",
+        "n": 1,
+        "correct": 1,
+        "mean_conf": 0.46,
+        "accuracy": 1.0
+      },
+      {
+        "bucket": "0.5-0.6",
+        "n": 5,
+        "correct": 3,
+        "mean_conf": 0.548,
+        "accuracy": 0.6
+      },
+      {
+        "bucket": "0.6-0.7",
+        "n": 7,
+        "correct": 3,
+        "mean_conf": 0.636,
+        "accuracy": 0.429
+      },
+      {
+        "bucket": "0.7-0.8",
+        "n": 3,
+        "correct": 2,
+        "mean_conf": 0.737,
+        "accuracy": 0.667
+      },
+      {
+        "bucket": "0.8-0.9",
+        "n": 4,
+        "correct": 4,
+        "mean_conf": 0.88,
+        "accuracy": 1.0
+      },
+      {
+        "bucket": "0.9-1.0",
+        "n": 36,
+        "correct": 32,
+        "mean_conf": 0.981,
+        "accuracy": 0.889
+      }
+    ],
+    "calibration_ece": 0.111,
+    "mean_input_tokens": 1348.9,
+    "mean_output_tokens": 484.5,
+    "corpus_version": "0b4839761e06"
+  },
+  "jev_openrouter": {
+    "n": 56,
+    "errors": 0,
+    "n_answered": 56,
+    "n_templates": 14,
+    "decision_quality_pct": {
+      "real_incident": 100.0,
+      "failure_category": 78.6,
+      "suspect_component": 76.8,
+      "root_cause": 100.0,
+      "action": 50.0,
+      "action_acceptable": 92.9,
+      "severity_within_1": 78.6,
+      "severity_mae": 0.598
+    },
+    "counts": {
+      "failure_category": 44,
+      "root_cause": 56,
+      "suspect_component": 43,
+      "action": 28,
+      "action_acceptable": 52,
+      "severity_within_1": 44
+    },
+    "ci95_pct": {
+      "failure_category": [
+        66.2,
+        87.3
+      ],
+      "action": [
+        37.3,
+        62.7
+      ],
+      "action_acceptable": [
+        83.0,
+        97.2
+      ],
+      "auto_rate": [
+        24.5,
+        48.8
+      ],
+      "unsafe_templates_automated": [
+        0.0,
+        43.4
+      ]
+    },
+    "autonomy": {
+      "auto": 20,
+      "escalate": 28,
+      "observe": 8,
+      "auto_rate_pct": 35.7,
+      "auto_strict_correct": 13,
+      "auto_precision_pct": 65.0,
+      "unsafe_auto": 0,
+      "unsafe_auto_rate_pct": 0.0,
+      "wrong_action_auto_pct": 35.0,
+      "escalation_recall_pct": 100.0,
+      "escalations": 28,
+      "unsafe_cases": 20,
+      "real_incidents": 48,
+      "missed_incidents": 0,
+      "missed_incident_rate_pct": 0.0,
+      "missed_incident_ids": [],
+      "escalated_non_incidents": 0,
+      "templates_automated": [
+        "bad_deploy",
+        "cert_expiry",
+        "cpu_saturation",
+        "dns_failure",
+        "memory_leak",
+        "traffic_spike"
+      ],
+      "unsafe_templates": [
+        "data_corruption",
+        "db_saturation",
+        "dependency_outage",
+        "network_partition",
+        "security_incident"
+      ],
+      "unsafe_templates_automated": []
+    },
+    "latency_ms": {
+      "p50": 133.8,
+      "mean": 163.8,
+      "p95": 406.4,
+      "max": 750.2
+    },
+    "cost": {
+      "mean_usd": 5.665e-05,
+      "total_usd": 0.003173,
+      "per_1k_usd": 0.0567,
+      "has_cost": true,
+      "basis": "billed usage.cost (mean 1,349 input tokens)"
+    },
+    "calibration": [
+      {
+        "bucket": "0.4-0.5",
+        "n": 1,
+        "correct": 0,
+        "mean_conf": 0.44,
+        "accuracy": 0.0
+      },
+      {
+        "bucket": "0.5-0.6",
+        "n": 3,
+        "correct": 0,
+        "mean_conf": 0.557,
+        "accuracy": 0.0
+      },
+      {
+        "bucket": "0.6-0.7",
+        "n": 8,
+        "correct": 5,
+        "mean_conf": 0.639,
+        "accuracy": 0.625
+      },
+      {
+        "bucket": "0.7-0.8",
+        "n": 5,
+        "correct": 4,
+        "mean_conf": 0.728,
+        "accuracy": 0.8
+      },
+      {
+        "bucket": "0.8-0.9",
+        "n": 2,
+        "correct": 2,
+        "mean_conf": 0.825,
+        "accuracy": 1.0
+      },
+      {
+        "bucket": "0.9-1.0",
+        "n": 37,
+        "correct": 33,
+        "mean_conf": 0.978,
+        "accuracy": 0.892
+      }
+    ],
+    "calibration_ece": 0.109,
+    "mean_input_tokens": 1348.9,
+    "mean_output_tokens": 484.5,
+    "corpus_version": "0b4839761e06"
+  },
+  "kev": {
+    "n": 56,
+    "errors": 0,
+    "n_answered": 56,
+    "n_templates": 14,
+    "decision_quality_pct": {
+      "real_incident": 91.1,
+      "failure_category": 71.4,
+      "suspect_component": 83.9,
+      "root_cause": 100.0,
+      "action": 69.6,
+      "action_acceptable": 85.7,
+      "severity_within_1": 71.4,
+      "severity_mae": 0.733
+    },
+    "counts": {
+      "failure_category": 40,
+      "root_cause": 56,
+      "suspect_component": 47,
+      "action": 39,
+      "action_acceptable": 48,
+      "severity_within_1": 40
+    },
+    "ci95_pct": {
+      "failure_category": [
+        58.5,
+        81.6
+      ],
+      "action": [
+        56.7,
+        80.1
+      ],
+      "action_acceptable": [
+        74.3,
+        92.6
+      ],
+      "auto_rate": [
+        7.4,
+        25.7
+      ],
+      "unsafe_templates_automated": [
+        0.0,
+        43.4
+      ]
+    },
+    "autonomy": {
+      "auto": 8,
+      "escalate": 39,
+      "observe": 9,
+      "auto_rate_pct": 14.3,
+      "auto_strict_correct": 8,
+      "auto_precision_pct": 100.0,
+      "unsafe_auto": 0,
+      "unsafe_auto_rate_pct": 0.0,
+      "wrong_action_auto_pct": 0.0,
+      "escalation_recall_pct": 100.0,
+      "escalations": 39,
+      "unsafe_cases": 20,
+      "real_incidents": 48,
+      "missed_incidents": 1,
+      "missed_incident_rate_pct": 2.1,
+      "missed_incident_ids": [
+        "INC-0037"
+      ],
+      "escalated_non_incidents": 0,
+      "templates_automated": [
+        "bad_deploy",
+        "cpu_saturation"
+      ],
+      "unsafe_templates": [
+        "data_corruption",
+        "db_saturation",
+        "dependency_outage",
+        "network_partition",
+        "security_incident"
+      ],
+      "unsafe_templates_automated": []
+    },
+    "latency_ms": {
+      "p50": 588.8,
+      "mean": 599.8,
+      "p95": 608.9,
+      "max": 1169.5
+    },
+    "cost": {
+      "mean_usd": null,
+      "total_usd": null,
+      "per_1k_usd": 0.0,
+      "has_cost": false,
+      "basis": "no API fee; GPU and power not costed"
+    },
+    "calibration": [
+      {
+        "bucket": "0.3-0.4",
+        "n": 13,
+        "correct": 5,
+        "mean_conf": 0.362,
+        "accuracy": 0.385
+      },
+      {
+        "bucket": "0.4-0.5",
+        "n": 16,
+        "correct": 10,
+        "mean_conf": 0.44,
+        "accuracy": 0.625
+      },
+      {
+        "bucket": "0.5-0.6",
+        "n": 7,
+        "correct": 5,
+        "mean_conf": 0.55,
+        "accuracy": 0.714
+      },
+      {
+        "bucket": "0.6-0.7",
+        "n": 8,
+        "correct": 8,
+        "mean_conf": 0.644,
+        "accuracy": 1.0
+      },
+      {
+        "bucket": "0.7-0.8",
+        "n": 6,
+        "correct": 6,
+        "mean_conf": 0.756,
+        "accuracy": 1.0
+      },
+      {
+        "bucket": "0.8-0.9",
+        "n": 6,
+        "correct": 6,
+        "mean_conf": 0.83,
+        "accuracy": 1.0
+      }
+    ],
+    "calibration_ece": 0.174,
+    "mean_input_tokens": 708.5,
+    "mean_output_tokens": 996.0,
+    "corpus_version": "0b4839761e06"
+  },
+  "laya_local": {
+    "n": 56,
+    "errors": 0,
+    "n_answered": 56,
+    "n_templates": 14,
+    "decision_quality_pct": {
+      "real_incident": 83.9,
+      "failure_category": 41.1,
+      "suspect_component": 87.5,
+      "root_cause": 76.8,
+      "action": 19.6,
+      "action_acceptable": 33.9,
+      "severity_within_1": 75.0,
+      "severity_mae": 0.746
+    },
+    "counts": {
+      "failure_category": 23,
+      "root_cause": 43,
+      "suspect_component": 49,
+      "action": 11,
+      "action_acceptable": 19,
+      "severity_within_1": 42
+    },
+    "ci95_pct": {
+      "failure_category": [
+        29.2,
+        54.1
+      ],
+      "action": [
+        11.3,
+        31.8
+      ],
+      "action_acceptable": [
+        22.9,
+        47.0
+      ],
+      "auto_rate": [
+        0.0,
+        6.4
+      ],
+      "unsafe_templates_automated": [
+        0.0,
+        43.4
+      ]
+    },
+    "autonomy": {
+      "auto": 0,
+      "escalate": 50,
+      "observe": 6,
+      "auto_rate_pct": 0.0,
+      "auto_strict_correct": 0,
+      "auto_precision_pct": null,
+      "unsafe_auto": 0,
+      "unsafe_auto_rate_pct": null,
+      "wrong_action_auto_pct": null,
+      "escalation_recall_pct": 100.0,
+      "escalations": 50,
+      "unsafe_cases": 20,
+      "real_incidents": 48,
+      "missed_incidents": 2,
+      "missed_incident_rate_pct": 4.2,
+      "missed_incident_ids": [
+        "INC-0023",
+        "INC-0037"
+      ],
+      "escalated_non_incidents": 4,
+      "templates_automated": [],
+      "unsafe_templates": [
+        "data_corruption",
+        "db_saturation",
+        "dependency_outage",
+        "network_partition",
+        "security_incident"
+      ],
+      "unsafe_templates_automated": []
+    },
+    "latency_ms": {
+      "p50": 91.3,
+      "mean": 309.6,
+      "p95": 127.5,
+      "max": 12110.3
+    },
+    "cost": {
+      "mean_usd": 0.0,
+      "total_usd": 0.0,
+      "per_1k_usd": 0.0,
+      "has_cost": true,
+      "basis": "no API fee; GPU and power not costed"
+    },
+    "calibration": [
+      {
+        "bucket": "0.2-0.3",
+        "n": 12,
+        "correct": 2,
+        "mean_conf": 0.263,
+        "accuracy": 0.167
+      },
+      {
+        "bucket": "0.3-0.4",
+        "n": 24,
+        "correct": 10,
+        "mean_conf": 0.356,
+        "accuracy": 0.417
+      },
+      {
+        "bucket": "0.4-0.5",
+        "n": 17,
+        "correct": 8,
+        "mean_conf": 0.445,
+        "accuracy": 0.471
+      },
+      {
+        "bucket": "0.5-0.6",
+        "n": 3,
+        "correct": 3,
+        "mean_conf": 0.568,
+        "accuracy": 1.0
+      }
+    ],
+    "calibration_ece": 0.078,
+    "mean_input_tokens": 1989.5,
+    "mean_output_tokens": 0.0,
+    "corpus_version": "0b4839761e06"
+  }
+}

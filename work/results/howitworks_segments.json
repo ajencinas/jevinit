@@ -1,0 +1,64 @@
+{
+  "voice": "bfGb7JTLUnZebZRiFYyq",
+  "speed": 1.05,
+  "model": "eleven_multilingual_v2",
+  "total": 162.45,
+  "words": 427,
+  "corpus_version": "0b4839761e06",
+  "segments": [
+    {
+      "id": "s1",
+      "dur": 6.64,
+      "words": 21,
+      "text": "This goes a level deeper: what goes into a Jev call, what comes back, and the code that acts on it."
+    },
+    {
+      "id": "s2",
+      "dur": 15.41,
+      "words": 43,
+      "text": "You could ask a chat model the same questions, and parse the text it writes. In one side-by-side test, GPT four oh mini gave the same answers as Jev. It didn't give a probability for each answer, and that's what the gate reads."
+    },
+    {
+      "id": "s3",
+      "dur": 12.67,
+      "words": 35,
+      "text": "A call has two parts: the state, here the alert text, and the questions. We used twelve, each with a type and a fixed list of allowed answers. Jev answers all twelve in one pass."
+    },
+    {
+      "id": "s4",
+      "dur": 21.97,
+      "words": 53,
+      "text": "There are three types. A Choice picks one option and returns the whole distribution. For failure category, it picks application or code fault, at one point oh. A Score places the incident on a scale: severity, two point one out of three. A Noul is a yes-or-no probability: deploy correlated, point nine five."
+    },
+    {
+      "id": "s5",
+      "dur": 19.67,
+      "words": 52,
+      "text": "How far can you trust them? TypeSafe says an answer given at point nine should be right about nine times in ten. On our fifty-six incidents, category answers at point nine or above were right thirty-two times in thirty-six. Below that there were only twenty, and accuracy didn't rise steadily with confidence."
+    },
+    {
+      "id": "s6",
+      "dur": 18.94,
+      "words": 52,
+      "text": "The gate is about fifty lines of Python, checked in order. A missing answer escalates, and so does a page score of point nine or more. Then the action must be pre-approved, with confidence, risk and severity inside limits. A rollback also needs a strong deploy link and a high safety score."
+    },
+    {
+      "id": "s7",
+      "dur": 19.04,
+      "words": 53,
+      "text": "Back to the payment incident. It rolled back with nobody paged, though its page score was point eight eight, just point oh two under the cutoff. Rollback safety cleared its bar by point oh one. That's common here: eighteen of the twenty-two automatic actions had page scores between point seven and point nine."
+    },
+    {
+      "id": "s8",
+      "dur": 22.83,
+      "words": 62,
+      "text": "Rollback is the first option on our action list. Jev proposed it sixteen times, where our labels call for it four. We never shuffled the options, so this may be order bias. That includes all four data-corruption incidents, which the gate escalated. In one, the deploy link sat exactly on its bar, and only rollback safety, at point four two, stopped it."
+    },
+    {
+      "id": "s9",
+      "dur": 22.88,
+      "words": 56,
+      "text": "Last, the limits. There's no held-out test set, and results swing on the thresholds. At a page cutoff of point eight, automatic actions fall from twenty-two to twelve. The same model, called through OpenRouter, gave different probabilities on all fifty-six incidents, and two gate outcomes flipped. And text planted in a log can move the answers."
+    }
+  ]
+}

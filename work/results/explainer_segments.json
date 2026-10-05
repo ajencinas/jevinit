@@ -1,0 +1,58 @@
+{
+  "voice": "bfGb7JTLUnZebZRiFYyq",
+  "speed": 1.05,
+  "model": "eleven_multilingual_v2",
+  "total": 185.41,
+  "words": 492,
+  "corpus_version": "0b4839761e06",
+  "segments": [
+    {
+      "id": "s1",
+      "dur": 31.58,
+      "words": 81,
+      "text": "Zero Ops is the aim of running routine incidents with no manual work: detected, triaged and resolved automatically, with people on the new and the risky. Much of that flow is already automated. Monitoring spots the problem, ServiceNow records it, PagerDuty pages, and runbooks carry out the fix. And the same flow runs in network monitoring, at even higher volume: a pool member down on an F five, a certificate expiring on a VIP, a failover at three in the morning."
+    },
+    {
+      "id": "s2",
+      "dur": 27.3,
+      "words": 71,
+      "text": "The gap is the judgment in the middle, and the industry is moving on it: every major incident-tooling vendor and cloud has launched or announced an AI agent for incident work. Is it real? Whose is it? How bad? Run the fix, or page someone? Today those calls are hand-written rules or the on-call engineer, and during an incident surge the same small team makes them at many times the volume."
+    },
+    {
+      "id": "s3",
+      "dur": 12.43,
+      "words": 34,
+      "text": "Jev is aimed at those judgment calls. Your existing tool would send it the alert text, and get the answers back from one API call. Telemetry, tickets, paging and runbooks stay where they are."
+    },
+    {
+      "id": "s4",
+      "dur": 13.37,
+      "words": 40,
+      "text": "You write the questions, and fix the allowed answers for each: an option from a list, a point on a scale, or yes or no. Jev answers all twelve of ours in one pass, with a probability on each answer."
+    },
+    {
+      "id": "s5",
+      "dur": 23.22,
+      "words": 65,
+      "text": "Here's one test incident. Errors on the payment service jumped six minutes after a deploy. Jev blamed the deploy and proposed a rollback. Every gate check passed, so it rolled back with nobody paged. Two were close. Jev put the need to page a human at point eight eight, against a cutoff of point nine, and rollback safety cleared its bar by point oh one."
+    },
+    {
+      "id": "s6",
+      "dur": 25.68,
+      "words": 67,
+      "text": "We built a demo on fifty-six synthetic incidents. Jev answered in about ninety milliseconds, at an estimated six cents per thousand. It handled twenty-two end to end, none of them among the twenty we'd marked unsafe. On all four data-corruption cases it proposed a rollback, and the gate stopped each one. Accuracy on real tickets still needs testing: here its action matched our label half the time."
+    },
+    {
+      "id": "s7",
+      "dur": 24.08,
+      "words": 63,
+      "text": "The opportunity has three parts. Getting tickets to the right team first time, including during incident surges. Making the severity and paging call consistently, in about a tenth of a second, with a record of why. And running reversible fixes behind a gate in your own code. Inference costs next to nothing, so the value rests on one thing: accuracy on your tickets."
+    },
+    {
+      "id": "s8",
+      "dur": 25.34,
+      "words": 71,
+      "text": "A few questions decide whether it's real for you. How often are tickets reassigned today? What does your ServiceNow licence already do? How much should a hosted model do on its own? There's a staged way to find out: a two to three week diagnostic on your own ServiceNow data, then a replay of your closed tickets, then shadow mode inside ServiceNow. We'd be glad to help you work through it."
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+# Core: evaluation, report, deck and pages (API backends only need these)
+httpx>=0.27
+python-dotenv>=1.0
+rich>=13.0
+python-pptx>=1.0
+pytest>=8.0
+
+# Optional local backends (GPU): Laya is imported in-process (pip install laya);
+# Kev runs as a separate server from third_party/kev with its own venv (scripts/serve_kev.sh).
