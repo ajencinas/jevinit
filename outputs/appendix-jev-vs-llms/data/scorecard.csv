@@ -1,0 +1,7 @@
+backend,exact_action_pct,acceptable_action_pct,category_pct,root_cause_pct,component_pct,severity_within_1_pct,auto,unsafe_auto,wrong_auto,missed_incidents,best_auto_zero_wrong,held_out_auto,held_out_unsafe,held_out_wrong,page_auroc,action_ece,action_auroc,same_action_3_runs_pct,p50_ms,p95_ms,usd_per_1k,cost_basis
+Jev 1.13 (TypeSafe API),50.0,92.9,80.4,100.0,75.0,80.4,21,0,8,0,12,11,0,3,0.522,0.316,0.952,100.0,97.5,133.0,0.057,list-price estimate
+Claude Sonnet 5.5,83.9,96.4,78.6,100.0,98.2,89.3,8,0,0,4,17,20,0,3,0.747,0.227,0.793,92.9,2863.3,3516.4,10.46,billed by OpenRouter
+GPT-6.1 Sol,78.6,96.4,85.7,96.4,96.4,100.0,3,0,0,1,20,19,0,2,0.772,0.156,0.758,98.2,5242.6,6824.9,5.6502,billed by OpenRouter
+Gemini 3.8 Flash,80.4,94.6,78.6,100.0,92.9,96.4,18,0,4,0,17,21,0,4,0.838,0.1,0.804,91.1,1937.4,4340.4,2.2685,billed by OpenRouter
+GPT-6 Luna,78.6,92.9,85.7,98.2,96.4,89.3,15,0,0,0,24,24,0,0,0.798,0.105,0.804,98.2,2752.6,3737.8,0.2748,billed by OpenRouter
+Qwen3.8 Flash,73.2,98.2,75.0,96.4,94.6,98.2,25,0,5,0,1,2,0,1,0.913,0.148,0.706,91.1,4887.0,7402.8,0.2815,billed by OpenRouter

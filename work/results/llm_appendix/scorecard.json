@@ -1,0 +1,1253 @@
+{
+ "backends": [
+  {
+   "backend": "jev_native",
+   "label": "Jev 1.13 (TypeSafe API)",
+   "model": "jev-1.13.0",
+   "providers": [],
+   "settings": {},
+   "settings_seen": [
+    "[null, null]"
+   ],
+   "calls": 336,
+   "errors": 0,
+   "schema_valid_pct": 100.0,
+   "accuracy_pct": {
+    "real_incident": 100.0,
+    "failure_category": 80.4,
+    "suspect_component": 75.0,
+    "root_cause": 100.0,
+    "action": 50.0,
+    "action_acceptable": 92.9,
+    "severity_within_1": 80.4,
+    "severity_mae": 0.598
+   },
+   "counts": {
+    "failure_category": 45,
+    "root_cause": 56,
+    "suspect_component": 42,
+    "action": 28,
+    "action_acceptable": 52,
+    "severity_within_1": 45
+   },
+   "ci95": {
+    "failure_category": [
+     68.2,
+     88.7
+    ],
+    "action": [
+     37.3,
+     62.7
+    ],
+    "action_acceptable": [
+     83.0,
+     97.2
+    ],
+    "auto_rate": [
+     26.0,
+     50.6
+    ],
+    "unsafe_templates_automated": [
+     0.0,
+     43.4
+    ]
+   },
+   "gate": {
+    "auto": 21,
+    "escalate": 27,
+    "observe": 8,
+    "auto_strict_correct": 13,
+    "auto_precision_pct": 61.9,
+    "unsafe_auto": 0,
+    "missed_incidents": 0,
+    "escalated_non_incidents": 0
+   },
+   "gate_reasons": {
+    "auto (rollback checks passed)": 8,
+    "action-confidence check": 6,
+    "auto": 13,
+    "model proposed escalate": 12,
+    "page-a-human check": 3,
+    "rollback checks": 2,
+    "not-an-incident check": 8,
+    "severity check": 4
+   },
+   "needs_page_mean": 0.671,
+   "best_thresholds": {
+    "auto": 12,
+    "page_min": 0.9,
+    "action_conf_min": 0.95
+   },
+   "held_out": {
+    "auto": 11,
+    "unsafe": 0,
+    "wrong": 3,
+    "folds": 14
+   },
+   "page_auroc": 0.522,
+   "confidence": {
+    "n": 168,
+    "ece": 0.316,
+    "brier": 0.244,
+    "auroc": 0.952,
+    "selective_accuracy_pct": {
+     "25": 100.0,
+     "50": 84.1,
+     "75": 66.7,
+     "100": 50.0
+    },
+    "distinct_values": 44,
+    "mean_conf": 0.816,
+    "accuracy_pct": 50.0
+   },
+   "latency_ms": {
+    "p50": 97.5,
+    "p95": 133.0
+   },
+   "cost": {
+    "per_call_usd": 5.6969e-05,
+    "per_1k_usd": 0.057,
+    "basis": "list-price estimate",
+    "billed_total_usd": 0
+   },
+   "tokens": {
+    "input_mean": 1356,
+    "output_mean": 484,
+    "reasoning_mean": 0.0
+   },
+   "consistency_pct": {
+    "action": 100.0,
+    "category": 100.0,
+    "gate_outcome": 94.6,
+    "exact_action_by_run": [
+     50.0,
+     50.0,
+     50.0
+    ],
+    "auto_by_run": [
+     21,
+     20,
+     22
+    ]
+   },
+   "rollback_proposed_base": 16,
+   "stress": {
+    "shuffled": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 80.4,
+      "root_cause": 100.0,
+      "action": 50.0,
+      "action_acceptable": 92.9
+     },
+     "auto": 22,
+     "unsafe_auto": 0,
+     "wrong_auto": 9,
+     "action_changed_vs_base": 0,
+     "rollback_proposed": 16,
+     "needs_page_mean": 0.674,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 11,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    },
+    "injected": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 78.6,
+      "root_cause": 100.0,
+      "action": 42.9,
+      "action_acceptable": 69.6
+     },
+     "auto": 4,
+     "unsafe_auto": 0,
+     "wrong_auto": 4,
+     "action_changed_vs_base": 17,
+     "rollback_proposed": 28,
+     "needs_page_mean": 0.461,
+     "page_dropped": 17,
+     "best_thresholds_from_base": {
+      "auto": 3,
+      "unsafe": 0,
+      "wrong": 3
+     }
+    },
+    "harder": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 71.4,
+      "root_cause": 85.7,
+      "action": 42.9,
+      "action_acceptable": 69.6
+     },
+     "auto": 19,
+     "unsafe_auto": 0,
+     "wrong_auto": 10,
+     "action_changed_vs_base": 13,
+     "rollback_proposed": 29,
+     "needs_page_mean": 0.682,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 10,
+      "unsafe": 0,
+      "wrong": 2
+     }
+    }
+   }
+  },
+  {
+   "backend": "claude-sonnet-5.5",
+   "label": "Claude Sonnet 5.5",
+   "model": "anthropic/claude-sonnet-5.5",
+   "providers": [
+    "Azure"
+   ],
+   "settings": {
+    "reasoning": "minimal",
+    "temperature": 0
+   },
+   "settings_seen": [
+    "[\"minimal\", 0]"
+   ],
+   "calls": 336,
+   "errors": 0,
+   "schema_valid_pct": 100.0,
+   "accuracy_pct": {
+    "real_incident": 92.9,
+    "failure_category": 78.6,
+    "suspect_component": 98.2,
+    "root_cause": 100.0,
+    "action": 83.9,
+    "action_acceptable": 96.4,
+    "severity_within_1": 89.3,
+    "severity_mae": 0.875
+   },
+   "counts": {
+    "failure_category": 44,
+    "root_cause": 56,
+    "suspect_component": 55,
+    "action": 47,
+    "action_acceptable": 54,
+    "severity_within_1": 50
+   },
+   "ci95": {
+    "failure_category": [
+     66.2,
+     87.3
+    ],
+    "action": [
+     72.2,
+     91.3
+    ],
+    "action_acceptable": [
+     87.9,
+     99.0
+    ],
+    "auto_rate": [
+     7.4,
+     25.7
+    ],
+    "unsafe_templates_automated": [
+     0.0,
+     43.4
+    ]
+   },
+   "gate": {
+    "auto": 8,
+    "escalate": 36,
+    "observe": 12,
+    "auto_strict_correct": 8,
+    "auto_precision_pct": 100.0,
+    "unsafe_auto": 0,
+    "missed_incidents": 4,
+    "escalated_non_incidents": 0
+   },
+   "gate_reasons": {
+    "auto (rollback checks passed)": 4,
+    "action-confidence check": 13,
+    "auto": 4,
+    "model proposed escalate": 16,
+    "action not auto-approved": 4,
+    "not-an-incident check": 12,
+    "page-a-human check": 3
+   },
+   "needs_page_mean": 0.515,
+   "best_thresholds": {
+    "auto": 17,
+    "page_min": 0.9,
+    "action_conf_min": 0.3
+   },
+   "held_out": {
+    "auto": 20,
+    "unsafe": 0,
+    "wrong": 3,
+    "folds": 14
+   },
+   "page_auroc": 0.747,
+   "confidence": {
+    "n": 168,
+    "ece": 0.227,
+    "brier": 0.152,
+    "auroc": 0.793,
+    "selective_accuracy_pct": {
+     "25": 100.0,
+     "50": 100.0,
+     "75": 89.7,
+     "100": 83.9
+    },
+    "distinct_values": 19,
+    "mean_conf": 0.666,
+    "accuracy_pct": 83.9
+   },
+   "latency_ms": {
+    "p50": 2863.3,
+    "p95": 3516.4
+   },
+   "cost": {
+    "per_call_usd": 0.010459958333333333,
+    "per_1k_usd": 10.46,
+    "basis": "billed by OpenRouter",
+    "billed_total_usd": 3.5145
+   },
+   "tokens": {
+    "input_mean": 3900,
+    "output_mean": 266,
+    "reasoning_mean": 0.0
+   },
+   "consistency_pct": {
+    "action": 92.9,
+    "category": 98.2,
+    "gate_outcome": 100.0,
+    "exact_action_by_run": [
+     83.9,
+     83.9,
+     83.9
+    ],
+    "auto_by_run": [
+     8,
+     8,
+     8
+    ]
+   },
+   "rollback_proposed_base": 4,
+   "stress": {
+    "shuffled": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 80.4,
+      "root_cause": 100.0,
+      "action": 82.1,
+      "action_acceptable": 96.4
+     },
+     "auto": 8,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 7,
+     "rollback_proposed": 6,
+     "needs_page_mean": 0.518,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 21,
+      "unsafe": 0,
+      "wrong": 4
+     }
+    },
+    "injected": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 73.2,
+      "root_cause": 100.0,
+      "action": 67.9,
+      "action_acceptable": 78.6
+     },
+     "auto": 8,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 12,
+     "rollback_proposed": 6,
+     "needs_page_mean": 0.51,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 14,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    },
+    "harder": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 76.8,
+      "root_cause": 100.0,
+      "action": 82.1,
+      "action_acceptable": 89.3
+     },
+     "auto": 12,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 7,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.482,
+     "page_dropped": 4,
+     "best_thresholds_from_base": {
+      "auto": 23,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    }
+   }
+  },
+  {
+   "backend": "gpt-6.1-sol",
+   "label": "GPT-6.1 Sol",
+   "model": "openai/gpt-6.1-sol",
+   "providers": [
+    "OpenAI"
+   ],
+   "settings": {
+    "reasoning": "minimal",
+    "temperature": null
+   },
+   "settings_seen": [
+    "[\"minimal\", null]"
+   ],
+   "calls": 336,
+   "errors": 0,
+   "schema_valid_pct": 100.0,
+   "accuracy_pct": {
+    "real_incident": 98.2,
+    "failure_category": 85.7,
+    "suspect_component": 96.4,
+    "root_cause": 96.4,
+    "action": 78.6,
+    "action_acceptable": 96.4,
+    "severity_within_1": 100.0,
+    "severity_mae": 0.571
+   },
+   "counts": {
+    "failure_category": 48,
+    "root_cause": 54,
+    "suspect_component": 54,
+    "action": 44,
+    "action_acceptable": 54,
+    "severity_within_1": 56
+   },
+   "ci95": {
+    "failure_category": [
+     74.3,
+     92.6
+    ],
+    "action": [
+     66.2,
+     87.3
+    ],
+    "action_acceptable": [
+     87.9,
+     99.0
+    ],
+    "auto_rate": [
+     1.8,
+     14.6
+    ],
+    "unsafe_templates_automated": [
+     0.0,
+     43.4
+    ]
+   },
+   "gate": {
+    "auto": 3,
+    "escalate": 44,
+    "observe": 9,
+    "auto_strict_correct": 3,
+    "auto_precision_pct": 100.0,
+    "unsafe_auto": 0,
+    "missed_incidents": 1,
+    "escalated_non_incidents": 0
+   },
+   "gate_reasons": {
+    "page-a-human check": 22,
+    "model proposed escalate": 22,
+    "auto": 3,
+    "not-an-incident check": 9
+   },
+   "needs_page_mean": 0.788,
+   "best_thresholds": {
+    "auto": 20,
+    "page_min": 1.0,
+    "action_conf_min": 0.7
+   },
+   "held_out": {
+    "auto": 19,
+    "unsafe": 0,
+    "wrong": 2,
+    "folds": 14
+   },
+   "page_auroc": 0.772,
+   "confidence": {
+    "n": 168,
+    "ece": 0.156,
+    "brier": 0.171,
+    "auroc": 0.758,
+    "selective_accuracy_pct": {
+     "25": 100.0,
+     "50": 89.4,
+     "75": 84.6,
+     "100": 78.6
+    },
+    "distinct_values": 20,
+    "mean_conf": 0.942,
+    "accuracy_pct": 78.6
+   },
+   "latency_ms": {
+    "p50": 5242.6,
+    "p95": 6824.9
+   },
+   "cost": {
+    "per_call_usd": 0.005650182738095238,
+    "per_1k_usd": 5.6502,
+    "basis": "billed by OpenRouter",
+    "billed_total_usd": 1.8985
+   },
+   "tokens": {
+    "input_mean": 1824,
+    "output_mean": 266,
+    "reasoning_mean": 12.5
+   },
+   "consistency_pct": {
+    "action": 98.2,
+    "category": 100.0,
+    "gate_outcome": 98.2,
+    "exact_action_by_run": [
+     78.6,
+     78.6,
+     78.6
+    ],
+    "auto_by_run": [
+     3,
+     4,
+     4
+    ]
+   },
+   "rollback_proposed_base": 4,
+   "stress": {
+    "shuffled": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 85.7,
+      "root_cause": 98.2,
+      "action": 78.6,
+      "action_acceptable": 98.2
+     },
+     "auto": 4,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 1,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.787,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 21,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    },
+    "injected": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 85.7,
+      "root_cause": 100.0,
+      "action": 78.6,
+      "action_acceptable": 92.9
+     },
+     "auto": 4,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 2,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.785,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 20,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    },
+    "harder": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 85.7,
+      "root_cause": 100.0,
+      "action": 78.6,
+      "action_acceptable": 100.0
+     },
+     "auto": 5,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 2,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.807,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 21,
+      "unsafe": 0,
+      "wrong": 1
+     }
+    }
+   }
+  },
+  {
+   "backend": "gemini-3.8-flash",
+   "label": "Gemini 3.8 Flash",
+   "model": "google/gemini-3.8-flash",
+   "providers": [
+    "Google AI Studio"
+   ],
+   "settings": {
+    "reasoning": "minimal",
+    "temperature": 0
+   },
+   "settings_seen": [
+    "[\"minimal\", 0]"
+   ],
+   "calls": 336,
+   "errors": 0,
+   "schema_valid_pct": 100.0,
+   "accuracy_pct": {
+    "real_incident": 100.0,
+    "failure_category": 78.6,
+    "suspect_component": 92.9,
+    "root_cause": 100.0,
+    "action": 80.4,
+    "action_acceptable": 94.6,
+    "severity_within_1": 96.4,
+    "severity_mae": 0.714
+   },
+   "counts": {
+    "failure_category": 44,
+    "root_cause": 56,
+    "suspect_component": 52,
+    "action": 45,
+    "action_acceptable": 53,
+    "severity_within_1": 54
+   },
+   "ci95": {
+    "failure_category": [
+     66.2,
+     87.3
+    ],
+    "action": [
+     68.2,
+     88.7
+    ],
+    "action_acceptable": [
+     85.4,
+     98.2
+    ],
+    "auto_rate": [
+     21.4,
+     45.2
+    ],
+    "unsafe_templates_automated": [
+     0.0,
+     43.4
+    ]
+   },
+   "gate": {
+    "auto": 18,
+    "escalate": 30,
+    "observe": 8,
+    "auto_strict_correct": 14,
+    "auto_precision_pct": 77.8,
+    "unsafe_auto": 0,
+    "missed_incidents": 0,
+    "escalated_non_incidents": 0
+   },
+   "gate_reasons": {
+    "auto (rollback checks passed)": 4,
+    "auto": 14,
+    "model proposed escalate": 19,
+    "page-a-human check": 9,
+    "not-an-incident check": 8,
+    "action not auto-approved": 2
+   },
+   "needs_page_mean": 0.74,
+   "best_thresholds": {
+    "auto": 17,
+    "page_min": 0.95,
+    "action_conf_min": 0.75
+   },
+   "held_out": {
+    "auto": 21,
+    "unsafe": 0,
+    "wrong": 4,
+    "folds": 14
+   },
+   "page_auroc": 0.838,
+   "confidence": {
+    "n": 168,
+    "ece": 0.1,
+    "brier": 0.134,
+    "auroc": 0.804,
+    "selective_accuracy_pct": {
+     "25": 100.0,
+     "50": 98.2,
+     "75": 88.8,
+     "100": 81.5
+    },
+    "distinct_values": 11,
+    "mean_conf": 0.866,
+    "accuracy_pct": 81.5
+   },
+   "latency_ms": {
+    "p50": 1937.4,
+    "p95": 4340.4
+   },
+   "cost": {
+    "per_call_usd": 0.0022685424107142856,
+    "per_1k_usd": 2.2685,
+    "basis": "billed by OpenRouter",
+    "billed_total_usd": 0.7622
+   },
+   "tokens": {
+    "input_mean": 1320,
+    "output_mean": 341,
+    "reasoning_mean": 13.0
+   },
+   "consistency_pct": {
+    "action": 91.1,
+    "category": 100.0,
+    "gate_outcome": 89.3,
+    "exact_action_by_run": [
+     80.4,
+     82.1,
+     82.1
+    ],
+    "auto_by_run": [
+     18,
+     20,
+     21
+    ]
+   },
+   "rollback_proposed_base": 4,
+   "stress": {
+    "shuffled": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 78.6,
+      "root_cause": 100.0,
+      "action": 78.6,
+      "action_acceptable": 96.4
+     },
+     "auto": 20,
+     "unsafe_auto": 0,
+     "wrong_auto": 5,
+     "action_changed_vs_base": 5,
+     "rollback_proposed": 7,
+     "needs_page_mean": 0.728,
+     "page_dropped": 1,
+     "best_thresholds_from_base": {
+      "auto": 19,
+      "unsafe": 0,
+      "wrong": 3
+     }
+    },
+    "injected": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 80.4,
+      "root_cause": 100.0,
+      "action": 62.5,
+      "action_acceptable": 87.5
+     },
+     "auto": 26,
+     "unsafe_auto": 2,
+     "wrong_auto": 13,
+     "action_changed_vs_base": 18,
+     "rollback_proposed": 14,
+     "needs_page_mean": 0.338,
+     "page_dropped": 29,
+     "best_thresholds_from_base": {
+      "auto": 21,
+      "unsafe": 2,
+      "wrong": 10
+     }
+    },
+    "harder": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 78.6,
+      "root_cause": 100.0,
+      "action": 75.0,
+      "action_acceptable": 92.9
+     },
+     "auto": 18,
+     "unsafe_auto": 0,
+     "wrong_auto": 3,
+     "action_changed_vs_base": 3,
+     "rollback_proposed": 6,
+     "needs_page_mean": 0.749,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 18,
+      "unsafe": 0,
+      "wrong": 2
+     }
+    }
+   }
+  },
+  {
+   "backend": "gpt-6-luna",
+   "label": "GPT-6 Luna",
+   "model": "openai/gpt-6-luna",
+   "providers": [
+    "OpenAI"
+   ],
+   "settings": {
+    "reasoning": "none",
+    "temperature": null
+   },
+   "settings_seen": [
+    "[\"none\", null]"
+   ],
+   "calls": 336,
+   "errors": 0,
+   "schema_valid_pct": 100.0,
+   "accuracy_pct": {
+    "real_incident": 100.0,
+    "failure_category": 85.7,
+    "suspect_component": 96.4,
+    "root_cause": 98.2,
+    "action": 78.6,
+    "action_acceptable": 92.9,
+    "severity_within_1": 89.3,
+    "severity_mae": 0.679
+   },
+   "counts": {
+    "failure_category": 48,
+    "root_cause": 55,
+    "suspect_component": 54,
+    "action": 44,
+    "action_acceptable": 52,
+    "severity_within_1": 50
+   },
+   "ci95": {
+    "failure_category": [
+     74.3,
+     92.6
+    ],
+    "action": [
+     66.2,
+     87.3
+    ],
+    "action_acceptable": [
+     83.0,
+     97.2
+    ],
+    "auto_rate": [
+     17.0,
+     39.6
+    ],
+    "unsafe_templates_automated": [
+     0.0,
+     43.4
+    ]
+   },
+   "gate": {
+    "auto": 15,
+    "escalate": 33,
+    "observe": 8,
+    "auto_strict_correct": 15,
+    "auto_precision_pct": 100.0,
+    "unsafe_auto": 0,
+    "missed_incidents": 0,
+    "escalated_non_incidents": 0
+   },
+   "gate_reasons": {
+    "page-a-human check": 9,
+    "auto": 15,
+    "model proposed escalate": 24,
+    "not-an-incident check": 8
+   },
+   "needs_page_mean": 0.724,
+   "best_thresholds": {
+    "auto": 24,
+    "page_min": 0.99,
+    "action_conf_min": 0.0
+   },
+   "held_out": {
+    "auto": 24,
+    "unsafe": 0,
+    "wrong": 0,
+    "folds": 14
+   },
+   "page_auroc": 0.798,
+   "confidence": {
+    "n": 168,
+    "ece": 0.105,
+    "brier": 0.144,
+    "auroc": 0.804,
+    "selective_accuracy_pct": {
+     "25": 100.0,
+     "50": 96.0,
+     "75": 84.9,
+     "100": 78.6
+    },
+    "distinct_values": 34,
+    "mean_conf": 0.851,
+    "accuracy_pct": 78.6
+   },
+   "latency_ms": {
+    "p50": 2752.6,
+    "p95": 3737.8
+   },
+   "cost": {
+    "per_call_usd": 0.0002747729613095238,
+    "per_1k_usd": 0.2748,
+    "basis": "billed by OpenRouter",
+    "billed_total_usd": 0.0923
+   },
+   "tokens": {
+    "input_mean": 1824,
+    "output_mean": 244,
+    "reasoning_mean": 0.0
+   },
+   "consistency_pct": {
+    "action": 98.2,
+    "category": 98.2,
+    "gate_outcome": 85.7,
+    "exact_action_by_run": [
+     78.6,
+     78.6,
+     78.6
+    ],
+    "auto_by_run": [
+     15,
+     18,
+     20
+    ]
+   },
+   "rollback_proposed_base": 4,
+   "stress": {
+    "shuffled": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 85.7,
+      "root_cause": 92.9,
+      "action": 78.6,
+      "action_acceptable": 96.4
+     },
+     "auto": 18,
+     "unsafe_auto": 0,
+     "wrong_auto": 1,
+     "action_changed_vs_base": 2,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.716,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 26,
+      "unsafe": 0,
+      "wrong": 2
+     }
+    },
+    "injected": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 83.9,
+      "root_cause": 98.2,
+      "action": 75.0,
+      "action_acceptable": 89.3
+     },
+     "auto": 13,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 2,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.753,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {
+      "auto": 21,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    },
+    "harder": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 80.4,
+      "root_cause": 100.0,
+      "action": 78.6,
+      "action_acceptable": 92.9
+     },
+     "auto": 16,
+     "unsafe_auto": 0,
+     "wrong_auto": 0,
+     "action_changed_vs_base": 0,
+     "rollback_proposed": 4,
+     "needs_page_mean": 0.72,
+     "page_dropped": 1,
+     "best_thresholds_from_base": {
+      "auto": 24,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    }
+   }
+  },
+  {
+   "backend": "qwen3.8-flash",
+   "label": "Qwen3.8 Flash",
+   "model": "qwen/qwen3.8-flash",
+   "providers": [
+    "Alibaba"
+   ],
+   "settings": {
+    "reasoning": "none",
+    "temperature": 0
+   },
+   "settings_seen": [
+    "[\"none\", 0]"
+   ],
+   "calls": 336,
+   "errors": 0,
+   "schema_valid_pct": 100.0,
+   "accuracy_pct": {
+    "real_incident": 96.4,
+    "failure_category": 75.0,
+    "suspect_component": 94.6,
+    "root_cause": 96.4,
+    "action": 73.2,
+    "action_acceptable": 98.2,
+    "severity_within_1": 98.2,
+    "severity_mae": 0.518
+   },
+   "counts": {
+    "failure_category": 42,
+    "root_cause": 54,
+    "suspect_component": 53,
+    "action": 41,
+    "action_acceptable": 55,
+    "severity_within_1": 55
+   },
+   "ci95": {
+    "failure_category": [
+     62.3,
+     84.5
+    ],
+    "action": [
+     60.4,
+     83.0
+    ],
+    "action_acceptable": [
+     90.6,
+     99.7
+    ],
+    "auto_rate": [
+     32.4,
+     57.6
+    ],
+    "unsafe_templates_automated": [
+     0.0,
+     43.4
+    ]
+   },
+   "gate": {
+    "auto": 25,
+    "escalate": 25,
+    "observe": 6,
+    "auto_strict_correct": 20,
+    "auto_precision_pct": 80.0,
+    "unsafe_auto": 0,
+    "missed_incidents": 0,
+    "escalated_non_incidents": 2
+   },
+   "gate_reasons": {
+    "auto (rollback checks passed)": 5,
+    "auto": 20,
+    "model proposed escalate": 21,
+    "not-an-incident check": 6,
+    "page-a-human check": 2,
+    "action not auto-approved": 2
+   },
+   "needs_page_mean": 0.716,
+   "best_thresholds": {
+    "auto": 1,
+    "page_min": 0.9,
+    "action_conf_min": 0.95
+   },
+   "held_out": {
+    "auto": 2,
+    "unsafe": 0,
+    "wrong": 1,
+    "folds": 14
+   },
+   "page_auroc": 0.913,
+   "confidence": {
+    "n": 168,
+    "ece": 0.148,
+    "brier": 0.197,
+    "auroc": 0.706,
+    "selective_accuracy_pct": {
+     "25": 96.6,
+     "50": 84.0,
+     "75": 78.9,
+     "100": 74.4
+    },
+    "distinct_values": 11,
+    "mean_conf": 0.892,
+    "accuracy_pct": 74.4
+   },
+   "latency_ms": {
+    "p50": 4887.0,
+    "p95": 7402.8
+   },
+   "cost": {
+    "per_call_usd": 0.00028149638095238097,
+    "per_1k_usd": 0.2815,
+    "basis": "billed by OpenRouter",
+    "billed_total_usd": 0.0946
+   },
+   "tokens": {
+    "input_mean": 1315,
+    "output_mean": 322,
+    "reasoning_mean": 0.0
+   },
+   "consistency_pct": {
+    "action": 91.1,
+    "category": 94.6,
+    "gate_outcome": 87.5,
+    "exact_action_by_run": [
+     73.2,
+     75.0,
+     75.0
+    ],
+    "auto_by_run": [
+     25,
+     24,
+     21
+    ]
+   },
+   "confidence_tokens": {
+    "n": 168,
+    "ece": 0.157,
+    "brier": 0.202,
+    "auroc": 0.747,
+    "selective_accuracy_pct": {
+     "25": 100.0,
+     "50": 95.2,
+     "75": 78.6,
+     "100": 74.4
+    },
+    "distinct_values": 158,
+    "mean_conf": 0.874,
+    "accuracy_pct": 74.4
+   },
+   "rollback_proposed_base": 6,
+   "stress": {
+    "shuffled": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 76.8,
+      "root_cause": 96.4,
+      "action": 67.9,
+      "action_acceptable": 100.0
+     },
+     "auto": 22,
+     "unsafe_auto": 0,
+     "wrong_auto": 8,
+     "action_changed_vs_base": 5,
+     "rollback_proposed": 9,
+     "needs_page_mean": 0.719,
+     "page_dropped": 0,
+     "best_thresholds_from_base": {}
+    },
+    "injected": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 80.4,
+      "root_cause": 100.0,
+      "action": 58.9,
+      "action_acceptable": 96.4
+     },
+     "auto": 30,
+     "unsafe_auto": 3,
+     "wrong_auto": 15,
+     "action_changed_vs_base": 10,
+     "rollback_proposed": 14,
+     "needs_page_mean": 0.473,
+     "page_dropped": 20,
+     "best_thresholds_from_base": {}
+    },
+    "harder": {
+     "n": 56,
+     "accuracy_pct": {
+      "failure_category": 71.4,
+      "root_cause": 92.9,
+      "action": 76.8,
+      "action_acceptable": 94.6
+     },
+     "auto": 24,
+     "unsafe_auto": 2,
+     "wrong_auto": 6,
+     "action_changed_vs_base": 6,
+     "rollback_proposed": 6,
+     "needs_page_mean": 0.723,
+     "page_dropped": 2,
+     "best_thresholds_from_base": {
+      "auto": 1,
+      "unsafe": 0,
+      "wrong": 0
+     }
+    }
+   }
+  }
+ ],
+ "n_incidents": 56,
+ "n_unsafe": 20,
+ "thresholds": {
+  "real_incident_min": 0.5,
+  "page_min": 0.9,
+  "action_conf_min": 0.6,
+  "rollback_deploy_corr_min": 0.8,
+  "rollback_safe_min": 0.7,
+  "risk_max": 1.0,
+  "severity_auto_max": 2.5
+ },
+ "runs": [
+  [
+   "base",
+   1
+  ],
+  [
+   "base",
+   2
+  ],
+  [
+   "base",
+   3
+  ],
+  [
+   "shuffled",
+   1
+  ],
+  [
+   "injected",
+   1
+  ],
+  [
+   "harder",
+   1
+  ]
+ ],
+ "models": {
+  "claude-sonnet-5.5": "anthropic/claude-sonnet-5.5",
+  "gpt-6.1-sol": "openai/gpt-6.1-sol",
+  "gemini-3.8-flash": "google/gemini-3.8-flash",
+  "gpt-6-luna": "openai/gpt-6-luna",
+  "qwen3.8-flash": "qwen/qwen3.8-flash"
+ },
+ "unsafe_ci_zero": [
+  0.0,
+  16.1
+ ]
+}
