@@ -192,6 +192,56 @@ def spark():
     return im
 
 
+@icon
+def person():
+    im, d = canvas()
+    d.ellipse([86, 30, 170, 114], outline=TEAL, width=W)
+    d.arc([46, 140, 210, 304], start=180, end=360, fill=TEAL, width=W)
+    d.line([46, 222, 210, 222], fill=TEAL, width=W)
+    return im
+
+
+@icon
+def clock():
+    im, d = canvas()
+    d.ellipse([28, 28, 228, 228], outline=TEAL, width=W)
+    d.line([128, 128, 128, 68], fill=TEAL, width=W)
+    d.line([128, 128, 172, 156], fill=TEAL, width=W)
+    d.ellipse([118, 118, 138, 138], fill=TEAL)
+    return im
+
+
+@icon
+def bell():
+    im, d = canvas()
+    d.arc([66, 40, 190, 164], start=180, end=360, fill=TEAL, width=W)
+    d.line([66, 102, 58, 180], fill=TEAL, width=W)
+    d.line([190, 102, 198, 180], fill=TEAL, width=W)
+    d.line([34, 184, 222, 184], fill=TEAL, width=W)
+    d.ellipse([110, 200, 146, 236], fill=TEAL)
+    return im
+
+
+@icon
+def search():
+    im, d = canvas()
+    d.ellipse([36, 36, 166, 166], outline=TEAL, width=W)
+    d.line([150, 150, 220, 220], fill=TEAL, width=W + 8)
+    return im
+
+
+@icon
+def fork():
+    im, d = canvas()
+    d.line([30, 128, 110, 128], fill=TEAL, width=W)
+    d.line([110, 128, 190, 62], fill=TEAL, width=W)
+    d.line([110, 128, 190, 194], fill=TEAL, width=W)
+    d.ellipse([94, 112, 126, 144], fill=TEAL)
+    d.polygon([(178, 42), (224, 40), (206, 82)], fill=TEAL)
+    d.polygon([(178, 214), (224, 216), (206, 174)], fill=TEAL)
+    return im
+
+
 def main() -> int:
     paths.ICONS.mkdir(parents=True, exist_ok=True)
     for name, fn in ICONS.items():

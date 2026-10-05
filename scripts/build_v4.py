@@ -18,7 +18,9 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import MSO_ANCHOR, PP_ALIGN
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
-from pptx.util import Inches
+from pptx.dml.color import RGBColor
+from pptx.oxml.xmlchemy import OxmlElement
+from pptx.util import Inches, Pt
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from zeroops import paths
@@ -28,10 +30,12 @@ from zeroops.policy import explain
 from build_cio_v2 import context, fill, digest, box, text, export_pdf, checks_rows, INK
 
 NAVY, TEAL, GREY, LIGHT, PALE, LINE_GREY = "142E42", "007F82", "596A76", "EFF4F6", "F8FAFB", "CCD7DD"
+MUTED, PALE_TEAL = "9AABB5", "8BCCD0"
 L, R, W = .6, 12.733, 12.133        # content left edge, right edge and width (inches)
 BOTTOM, FOOT = 6.72, 6.9            # content stops at BOTTOM; the footer rule sits at FOOT
 GAP = .3                            # between cards
 LINE = 1.2                          # line pitch as a multiple of the font size, measured in the exported PDF
+INDENT, AFTER = .28, 7              # bullet lists: hanging indent (inches) and space after each item (pt)
 
 # LibreOffice exports the deck with Noto Sans in place of Aptos, so text is measured with it to size the
 # boxes; Aptos is narrower, so what fits in the PDF also fits in PowerPoint.
@@ -72,9 +76,13 @@ def lines(value, size, width, bold=False):
 
 
 def height(value, size, width, bold=False):
-    """Height of wrapped text, in inches, including the 3 pt after each paragraph that text() adds."""
+    """Height of wrapped text, in inches, including the 3 pt after each paragraph that text() adds.
+    A list is a bulleted list, as bullets() draws it."""
     if not value:
         return 0
+    if isinstance(value, list):
+        n = sum(lines(item, size, width - INDENT, bold) for item in value)
+        return (n * LINE + .16) * size / 72 + (len(value) - 1) * AFTER / 72
     return (lines(value, size, width, bold) * LINE + .16) * size / 72 + (value.count("\n") + 1) * 3 / 72
 
 
@@ -86,6 +94,28 @@ def write(slide, value, x, y, w, h, size, color=INK, bold=False, anchor=None, al
         for p in shp.text_frame.paragraphs:
             p.alignment = align
     return shp
+
+
+def bullets(slide, items, x, y, w, h, size, color=INK, bold=False):
+    """One text box, one teal-bulleted paragraph per item, with a hanging indent."""
+    shp = write(slide, "\n".join(items), x, y, w, h, size, color, bold)
+    for p in shp.text_frame.paragraphs:
+        p.space_after = Pt(AFTER)
+        ppr = p._p.get_or_add_pPr()
+        ppr.set("marL", str(Inches(INDENT)))
+        ppr.set("indent", str(-Inches(INDENT)))
+        clr, rgb, font, char = (OxmlElement(t) for t in ("a:buClr", "a:srgbClr", "a:buFont", "a:buChar"))
+        rgb.set("val", TEAL)
+        clr.append(rgb)
+        font.set("typeface", "Arial")
+        char.set("char", "\u2022")
+        for el in (clr, font, char):
+            ppr.insert_element_before(el, "a:tabLst", "a:defRPr", "a:extLst")
+    return shp
+
+
+def picture(slide, name, x, y, size):
+    slide.shapes.add_picture(str(paths.ICONS / f"{name}.png"), Inches(x), Inches(y), Inches(size), Inches(size))
 
 
 def link(shape, url):
@@ -124,7 +154,8 @@ def cards(slide, items, top, styles, pad=.25, gap=GAP):
         y = top + pad + .05
         for f, (size, color, bold) in enumerate(styles):
             if heights[f]:
-                write(slide, item[f], x + pad, y, inner, heights[f], size, color, bold)
+                (bullets if isinstance(item[f], list) else write)(slide, item[f], x + pad, y, inner, heights[f],
+                                                                  size, color, bold)
                 y += heights[f] + .14
     return bottom
 
@@ -183,7 +214,7 @@ def frame(slide, spec):
     ic = SECTION_ICON.get(spec.get("section", "").strip().upper())
     if ic and (paths.ICONS / f"{ic}.png").exists():
         box(slide, R - .78, .3, .78, .78, LIGHT)
-        slide.shapes.add_picture(str(paths.ICONS / f"{ic}.png"), Inches(R - .68), Inches(.4), Inches(.58), Inches(.58))
+        picture(slide, ic, R - .68, .4, .58)
     return y + .38
 
 
@@ -316,7 +347,36 @@ def build_deck(story, facts, sources, target):
             table_with_band(slide, spec, top)
         elif layout == "split":
             items = [(spec[side + "_title"], spec[side]) for side in ("left", "right")]
-            cards(slide, items, top, [(21, NAVY, True), (17, INK, False)], pad=.35, gap=.4)
+            size = 16 if isinstance(items[0][1], list) else 17
+            cards(slide, items, top, [(21, NAVY, True), (size, INK, False)], pad=.32, gap=.4)
+        elif layout == "before_after":
+            # Two cards, each step with its icon, the outcome pinned to the bottom; grey before, teal after.
+            sides, gap, pad, ic, badge = (spec["before"], spec["after"]), .7, .3, .3, .66
+            w = (W - gap) / 2
+            tw, ow = w - 2 * pad - ic - .2, w - 2 * pad - ic - .55
+            steps_h = max(sum(max(ic, height(t, 15, tw)) + .14 for _, t in side["steps"]) for side in sides)
+            out_h = max(height(side["outcome"][1], 14, ow, True) for side in sides) + .3
+            bottom = top + .05 + pad + badge + .3 + steps_h + .12 + out_h + pad
+            for i, side in enumerate(sides):
+                x, accent = L + i * (w + gap), TEAL if i else MUTED
+                card(slide, x, top, w, bottom - top, accent=accent)
+                y = top + .05 + pad
+                box(slide, x + pad, y, badge, badge, "FFFFFF", MSO_SHAPE.OVAL)
+                picture(slide, side["icon"], x + pad + .14, y + .14, badge - .28)
+                write(slide, side["title"], x + pad + badge + .22, y, w - 2 * pad - badge - .22, badge, 21, NAVY, True,
+                      MSO_ANCHOR.MIDDLE)
+                y += badge + .3
+                for name, value in side["steps"]:
+                    th = height(value, 15, tw)
+                    picture(slide, name, x + pad, y + (15 * LINE / 72 - ic) / 2, ic)
+                    write(slide, value, x + pad + ic + .2, y, tw, th, 15)
+                    y += max(ic, th) + .14
+                y = bottom - pad - out_h
+                box(slide, x + pad, y, w - 2 * pad, out_h, "FFFFFF")
+                box(slide, x + pad, y, .06, out_h, accent)
+                picture(slide, side["outcome"][0], x + pad + .22, y + (out_h - ic) / 2, ic)
+                write(slide, side["outcome"][1], x + pad + ic + .42, y, ow, out_h, 14, NAVY, True, MSO_ANCHOR.MIDDLE)
+            arrow(slide, L + w + gap / 2, (top + bottom) / 2, w=.24, h=.42)
         elif layout == "workflow":
             # The middle stages are where the body says a decision component fits; they are filled teal.
             n, gap = len(spec["stages"]), .4
@@ -408,20 +468,39 @@ def build_deck(story, facts, sources, target):
                            gap=.25)
             write(slide, spec["body"], L, bottom + .4, W, height(spec["body"], 18, W), 18)
         elif layout == "stages":
-            # Each stage card ends in the decision it leads to, with a notch pointing into it.
-            n = len(spec["levers"])
-            bottom = cards(slide, spec["levers"], top, [(18, NAVY, True), (14, TEAL, True), (13, INK, False)], pad=.2)
-            w = (W - GAP * (n - 1)) / n
-            qh = max(height(q, 15, w - .5, True) for _, q in spec["stages"])
-            dh = .3 + .24 + .04 + qh + .2
-            for i, (h, q) in enumerate(spec["stages"]):
-                x = L + i * (w + GAP)
-                box(slide, x, bottom, w, dh, NAVY)
-                box(slide, x + w / 2 - .18, bottom, .36, .15, LIGHT, MSO_SHAPE.ISOSCELES_TRIANGLE).rotation = 180
-                write(slide, h.upper(), x + .25, bottom + .3, w - .5, .24, 11, "8BCCD0", True)
-                write(slide, q, x + .25, bottom + .58, w - .5, qh, 15, "FFFFFF", True)
-            y = bottom + dh + .28
-            write(slide, spec["help"], L, y, W, height(spec["help"], 13, W), 13, GREY)
+            # Numbered steps in sequence: what happens in each, then the decision it ends in.
+            steps, gap, pad, dot = spec["steps"], .5, .22, .48
+            n = len(steps)
+            w = (W - gap * (n - 1)) / n
+            does_h = max(height(st["does"], 13.5, w - 2 * pad) for st in steps)
+            ask_h = max(height(st["decision"], 14, w - 2 * pad, True) for st in steps)
+            mid = top + dot + .16
+            low = mid + .05 + pad + does_h + pad - .12
+            ends = low + .22 + .2 + .04 + ask_h + .12
+            for i, st in enumerate(steps):
+                x = L + i * (w + gap)
+                box(slide, x, top, dot, dot, TEAL, MSO_SHAPE.OVAL)
+                write(slide, str(i + 1), x, top, dot, dot, 18, "FFFFFF", True, MSO_ANCHOR.MIDDLE, PP_ALIGN.CENTER)
+                write(slide, st["name"], x + dot + .16, top - .05, w - dot - .16, .34, 19, NAVY, True)
+                write(slide, st["weeks"], x + dot + .16, top + .29, w - dot - .16, .22, 12, TEAL, True)
+                if i < n - 1:
+                    arrow(slide, x + w + gap / 2, top + dot / 2, color=MUTED)
+                card(slide, x, mid, w, low - mid)
+                bullets(slide, st["does"], x + pad, mid + .05 + pad, w - 2 * pad, does_h, 13.5)
+                box(slide, x, low, w, ends - low, NAVY)
+                box(slide, x + w / 2 - .18, low, .36, .15, LIGHT, MSO_SHAPE.ISOSCELES_TRIANGLE).rotation = 180
+                write(slide, "DECISION", x + pad, low + .22, w - 2 * pad, .2, 10, PALE_TEAL, True)
+                write(slide, st["decision"], x + pad, low + .46, w - 2 * pad, ask_h, 14, "FFFFFF", True)
+            help_ = spec["help_title"] + ":   " + "  \u00b7  ".join(spec["help"])
+            hh = height(help_, 12, W - .5, True)
+            box(slide, L, ends + .2, W, hh + .16, PALE)
+            box(slide, L, ends + .2, .06, hh + .16, TEAL)
+            p = write(slide, spec["help_title"] + ":   ", L + .25, ends + .28, W - .5, hh, 12, NAVY, True) \
+                .text_frame.paragraphs[0]
+            run = p.add_run()
+            run.text = "  \u00b7  ".join(spec["help"])
+            run.font.name, run.font.size, run.font.bold = "Aptos", Pt(12), False
+            run.font.color.rgb = RGBColor.from_string(GREY)
         elif layout == "video":
             pw = 7.6
             ph, px = pw * 9 / 16, R - pw
